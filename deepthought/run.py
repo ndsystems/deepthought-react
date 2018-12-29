@@ -42,12 +42,12 @@ class mainwindow(QtWidgets.QMainWindow):
     def dia_toggle(self):
         if self.diaShutter is 0:
             self.diaShutter = 1
-            controls.shutter_control(self.mmc, "dia", self.epiShutter)
+            controls.shutter_control(self.mmc, "dia", self.diaShutter)
             self.ui.diaToggleBtn.setText("ON")
 
         else:
             self.diaShutter = 0
-            controls.shutter_control(self.mmc, "dia", self.epiShutter)
+            controls.shutter_control(self.mmc, "dia", self.diaShutter)
             self.ui.diaToggleBtn.setText("DIA")
 
 
