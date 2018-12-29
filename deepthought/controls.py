@@ -1,8 +1,8 @@
-import matplotlib.pyplot as plt
 import MMCorePy
 
 
-def load_microscope(mmc):
+def loadDevices():
+    mmc = MMCorePy.CMMCore()
     mmc.loadDevice("Olympus IX83", "OlympusIX83", "Olympus IX83")
     mmc.loadDevice("Objective", "OlympusIX83", "Objective")
     mmc.loadDevice("Light Path", "OlympusIX83", "Light Path")
@@ -21,10 +21,6 @@ def load_microscope(mmc):
     mmc.loadDevice("XYStage", "OlympusIX83", "XYStage")
     mmc.loadDevice("Autofocus", "OlympusIX83", "Autofocus")
     mmc.loadDevice("AutofocusDrive", "OlympusIX83", "AutofocusDrive")
-    return mmc
-
-
-def load_camera(mmc):
     mmc.loadDevice("Andor_cam1", "AndorSDK3", "Andor sCMOS Camera")
     mmc.setCameraDevice('Andor_cam1')
     return mmc
@@ -47,18 +43,7 @@ def shutter_control(shutter, state):
     return
 
 
-def view_image(img):
-    plt.imshow(img, cmap=plt.cm.gray)
-    plt.show()
-
-
 if __name__ == "__main__":
-    mmc = MMCorePy.CMMCore()
-
-    mmc = load_microscope(mmc)
-    mmc = load_camera(mmc)
+    mmc = loadDevices()
     mmc.initializeAllDevices()
-
     img = snap_image(200, "epi")
-
-    view_image(img)
