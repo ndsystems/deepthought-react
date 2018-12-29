@@ -1,7 +1,6 @@
 from PyQt5 import QtWidgets
 from gui import main
-#import controls
-import time
+import controls
 import sys
 
 
