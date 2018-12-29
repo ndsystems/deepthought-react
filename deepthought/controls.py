@@ -27,10 +27,10 @@ def loadDevices():
 
 
 def snap_image(mmc, exposure_time=200, shutter="epi"):
-    shutter_control(shutter, 0)
+    shutter_control(mmc, shutter, 0)
     mmc.setProperty("Andor_cam1", "Exposure", exposure_time)
     mmc.snapImage()
-    shutter_control(shutter, 1)
+    shutter_control(mmc, shutter, 1)
     return mmc.getImage()
 
 
