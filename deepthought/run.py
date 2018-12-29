@@ -19,6 +19,7 @@ class mainwindow(QtWidgets.QMainWindow):
     def load_microscope(self):
         if self.mmc is None:
             self.mmc = controls.loadDevices()
+            self.mmc.initializeAllDevices()
         else:
             pass
 
