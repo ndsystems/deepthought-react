@@ -31,23 +31,23 @@ class mainwindow(QtWidgets.QMainWindow):
     def epi_toggle(self):
         if self.epiShutter is 0:
             self.epiShutter = 1
-            controls.shutter_control(mmc, "epi", self.epiShutter)
+            controls.shutter_control(self.mmc, "epi", self.epiShutter)
             self.ui.epiToggleBtn.setText("ON")
 
         else:
             self.epiShutter = 0
-            controls.shutter_control(mmc, "epi", self.epiShutter)
+            controls.shutter_control(self.mmc, "epi", self.epiShutter)
             self.ui.epiToggleBtn.setText("EPI")
 
     def dia_toggle(self):
         if self.diaShutter is 0:
             self.diaShutter = 1
-            controls.shutter_control(mmc, "dia", self.epiShutter)
+            controls.shutter_control(self.mmc, "dia", self.epiShutter)
             self.ui.diaToggleBtn.setText("ON")
 
         else:
             self.diaShutter = 0
-            controls.shutter_control(mmc, "dia", self.epiShutter)
+            controls.shutter_control(self.mmc, "dia", self.epiShutter)
             self.ui.diaToggleBtn.setText("DIA")
 
 
