@@ -1,6 +1,7 @@
 from PyQt5 import QtWidgets
 from gui import main
-import controls
+#import controls
+import time
 import sys
 
 
@@ -15,13 +16,18 @@ class mainwindow(QtWidgets.QMainWindow):
         self.diaShutter = 0
         self.ui.epiToggleBtn.clicked.connect(self.epi_toggle)
         self.ui.diaToggleBtn.clicked.connect(self.dia_toggle)
+        self.ui.loadMicroscopeBtn.clicked.connect(self.load_microscope)
 
     def load_microscope(self):
         if self.mmc is None:
+            self.ui.loadMicroscopeBtn.setText("Loading")
             self.mmc = controls.loadDevices()
             self.mmc.initializeAllDevices()
+            self.ui.loadMicroscopeBtn.setText("Unload")
         else:
-            pass
+            self.mmc.reset()
+            self.mmc = None
+            self.ui.loadMicroscopeBtn.setText("Load Microscope")
 
     def epi_toggle(self):
         if self.epiShutter is 0:
