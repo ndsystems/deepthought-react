@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'testing.ui'
+# Form implementation generated from reading ui file 'main_window.ui'
 #
 # Created by: PyQt5 UI code generator 5.11.3
 #
@@ -12,22 +12,23 @@ class Ui_Form(object):
     def setupUi(self, Form):
         Form.setObjectName("Form")
         Form.resize(192, 182)
+        Form.setAutoFillBackground(True)
         self.horizontalLayout = QtWidgets.QHBoxLayout(Form)
         self.horizontalLayout.setObjectName("horizontalLayout")
         self.verticalLayout = QtWidgets.QVBoxLayout()
         self.verticalLayout.setObjectName("verticalLayout")
-        self.live_toggle_btn = QtWidgets.QPushButton(Form)
-        self.live_toggle_btn.setObjectName("live_toggle_btn")
-        self.verticalLayout.addWidget(self.live_toggle_btn)
-        self.snapshot_btn = QtWidgets.QPushButton(Form)
-        self.snapshot_btn.setObjectName("snapshot_btn")
-        self.verticalLayout.addWidget(self.snapshot_btn)
-        self.camera_btn = QtWidgets.QRadioButton(Form)
-        self.camera_btn.setObjectName("camera_btn")
-        self.verticalLayout.addWidget(self.camera_btn)
-        self.eyepiece_btn = QtWidgets.QRadioButton(Form)
-        self.eyepiece_btn.setObjectName("eyepiece_btn")
-        self.verticalLayout.addWidget(self.eyepiece_btn)
+        self.LiveToggleBtn = QtWidgets.QPushButton(Form)
+        self.LiveToggleBtn.setObjectName("LiveToggleBtn")
+        self.verticalLayout.addWidget(self.LiveToggleBtn)
+        self.SnapshotBtn = QtWidgets.QPushButton(Form)
+        self.SnapshotBtn.setObjectName("SnapshotBtn")
+        self.verticalLayout.addWidget(self.SnapshotBtn)
+        self.CameraRadBtn = QtWidgets.QRadioButton(Form)
+        self.CameraRadBtn.setObjectName("CameraRadBtn")
+        self.verticalLayout.addWidget(self.CameraRadBtn)
+        self.EyepieceRadBtn = QtWidgets.QRadioButton(Form)
+        self.EyepieceRadBtn.setObjectName("EyepieceRadBtn")
+        self.verticalLayout.addWidget(self.EyepieceRadBtn)
         self.line = QtWidgets.QFrame(Form)
         self.line.setFrameShape(QtWidgets.QFrame.HLine)
         self.line.setFrameShadow(QtWidgets.QFrame.Sunken)
@@ -36,12 +37,12 @@ class Ui_Form(object):
         self.horizontalLayout_2 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_2.setSpacing(10)
         self.horizontalLayout_2.setObjectName("horizontalLayout_2")
-        self.epi_shutter_toggle_btn = QtWidgets.QPushButton(Form)
-        self.epi_shutter_toggle_btn.setObjectName("epi_shutter_toggle_btn")
-        self.horizontalLayout_2.addWidget(self.epi_shutter_toggle_btn)
-        self.dia_shutter_toggle_btn = QtWidgets.QPushButton(Form)
-        self.dia_shutter_toggle_btn.setObjectName("dia_shutter_toggle_btn")
-        self.horizontalLayout_2.addWidget(self.dia_shutter_toggle_btn)
+        self.EpiToggleBtn = QtWidgets.QPushButton(Form)
+        self.EpiToggleBtn.setObjectName("EpiToggleBtn")
+        self.horizontalLayout_2.addWidget(self.EpiToggleBtn)
+        self.DiaToggleBtn = QtWidgets.QPushButton(Form)
+        self.DiaToggleBtn.setObjectName("DiaToggleBtn")
+        self.horizontalLayout_2.addWidget(self.DiaToggleBtn)
         self.verticalLayout.addLayout(self.horizontalLayout_2)
         spacerItem = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
         self.verticalLayout.addItem(spacerItem)
@@ -53,12 +54,12 @@ class Ui_Form(object):
     def retranslateUi(self, Form):
         _translate = QtCore.QCoreApplication.translate
         Form.setWindowTitle(_translate("Form", "deepthought"))
-        self.live_toggle_btn.setText(_translate("Form", "Live"))
-        self.snapshot_btn.setText(_translate("Form", "Snap"))
-        self.camera_btn.setText(_translate("Form", "Camera"))
-        self.eyepiece_btn.setText(_translate("Form", "Eye Piece"))
-        self.epi_shutter_toggle_btn.setText(_translate("Form", "EPI"))
-        self.dia_shutter_toggle_btn.setText(_translate("Form", "DIA"))
+        self.LiveToggleBtn.setText(_translate("Form", "Live"))
+        self.SnapshotBtn.setText(_translate("Form", "Snap"))
+        self.CameraRadBtn.setText(_translate("Form", "Camera"))
+        self.EyepieceRadBtn.setText(_translate("Form", "Eye Piece"))
+        self.EpiToggleBtn.setText(_translate("Form", "EPI"))
+        self.DiaToggleBtn.setText(_translate("Form", "DIA"))
 
 
 if __name__ == "__main__":
