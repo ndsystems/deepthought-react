@@ -32,7 +32,7 @@ class mainwindow(QtWidgets.QMainWindow):
 
     def snap_image(self):
         img = controls.snap_image(self.mmc, exposure_time=200)
-        self.ui.widget.canvas.ax.imshow(img, cmap=plt.cm.gray)
+        self.ui.widget.canvas.ax.imshow(img, cmap="gray")
         self.ui.widget.canvas.draw()
 
     def live(self):
