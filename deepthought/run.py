@@ -16,17 +16,27 @@ class mainwindow(QtWidgets.QMainWindow):
         self.ui.epiToggleBtn.clicked.connect(self.epi_toggle)
         self.ui.diaToggleBtn.clicked.connect(self.dia_toggle)
         self.ui.loadMicroscopeBtn.clicked.connect(self.load_microscope)
+        self.ui.unloadBtn.clicked.connect(self.unload_microscope)
+        self.ui.eyepieceRadBtn.clicked.connect(self.eyepiece_toogle)
+        self.ui.snapshotBtn.clicked.connect(self.snap_image)
+
+    def snap_image(self):
+        img = controls.snap_image(self.mmc, exposure_time=200)
+        self.ui.widget.canvas.ax.imshow(img, cmap=plt.cm.gray)
+        self.ui.widget.canvas.draw()
 
     def load_microscope(self):
         if self.mmc is None:
-            self.ui.loadMicroscopeBtn.setText("Loading")
             self.mmc = controls.loadDevices()
             self.mmc.initializeAllDevices()
-            self.ui.loadMicroscopeBtn.setText("Unload")
-        else:
-            self.mmc.reset()
-            self.mmc = None
-            self.ui.loadMicroscopeBtn.setText("Load Microscope")
+            self.ui.loadMicroscopeBtn.setEnabled(False)
+            self.ui.unloadBtn.setEnabled(True)
+
+    def unload_microscope(self):
+        self.mmc.reset()
+        self.mmc = None
+        self.ui.unloadBtn.setEnabled(False)
+        self.ui.loadMicroscopeBtn.setEnabled(True)
 
     def epi_toggle(self):
         if self.epiShutter is 0:
@@ -49,6 +59,9 @@ class mainwindow(QtWidgets.QMainWindow):
             self.diaShutter = 0
             controls.shutter_control(self.mmc, "dia", self.diaShutter)
             self.ui.diaToggleBtn.setText("DIA")
+
+    def eyepiece_toogle():
+        pass
 
 
 if __name__ == "__main__":
