@@ -1,9 +1,9 @@
 import MMCorePy
 
 
-def loadDevices():
+def loadDevices(filepath):
     mmc = MMCorePy.CMMCore()
-    mmc.loadSystemConfiguration("configs/Bright_Star.cfg")
+    mmc.loadSystemConfiguration(filepath)
     return mmc
 
 
