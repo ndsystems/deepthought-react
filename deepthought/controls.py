@@ -3,34 +3,14 @@ import MMCorePy
 
 def loadDevices():
     mmc = MMCorePy.CMMCore()
-    mmc.loadDevice("Olympus IX83", "OlympusIX83", "Olympus IX83")
-    mmc.loadDevice("Objective", "OlympusIX83", "Objective")
-    mmc.loadDevice("Light Path", "OlympusIX83", "Light Path")
-    mmc.loadDevice("Condenser turret", "OlympusIX83", "Condenser turret")
-    mmc.loadDevice("Polarizer", "OlympusIX83", "Polarizer")
-    mmc.loadDevice("Dichroic 1", "OlympusIX83", "Dichroic 1")
-    mmc.loadDevice("EpiShutter 1", "OlympusIX83", "EpiShutter 1")
-    mmc.loadDevice("DiaShutter", "OlympusIX83", "DiaShutter")
-    mmc.loadDevice("TransmittedIllumination 1",
-                   "OlympusIX83", "TransmittedIllumination 1")
-    mmc.loadDevice("TransmittedIllumination 2",
-                   "OlympusIX83", "TransmittedIllumination 2")
-    mmc.loadDevice("Transmitted Aperture",
-                   "OlympusIX83", "Transmitted Aperture")
-    mmc.loadDevice("FocusDrive", "OlympusIX83", "FocusDrive")
-    mmc.loadDevice("XYStage", "OlympusIX83", "XYStage")
-    mmc.loadDevice("Autofocus", "OlympusIX83", "Autofocus")
-    mmc.loadDevice("AutofocusDrive", "OlympusIX83", "AutofocusDrive")
-    mmc.loadDevice("Andor_cam1", "AndorSDK3", "Andor sCMOS Camera")
-    mmc.setCameraDevice('Andor_cam1')
+    mmc.loadSystemConfiguration("configs/Bright_Star.cfg")
     return mmc
 
 
 def snap_image(mmc, exposure_time=200, shutter="epi"):
-    shutter_control(mmc, shutter, 0)
+    mmc.setAutoShutter(True)
     mmc.setProperty("Andor_cam1", "Exposure", exposure_time)
     mmc.snapImage()
-    shutter_control(mmc, shutter, 1)
     return mmc.getImage()
 
 
