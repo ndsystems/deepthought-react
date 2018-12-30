@@ -4,6 +4,15 @@ import controls
 import sys
 
 
+class MainBackgroundThread(QThread):
+    def __init__(self, filename):
+        QThread.__init__(self)
+        self.filename = filename
+
+    def load(self):
+        return controls.loadDevices(self.filename)
+
+
 class mainwindow(QtWidgets.QMainWindow):
     def __init__(self):
         super(mainwindow, self).__init__()
@@ -19,15 +28,20 @@ class mainwindow(QtWidgets.QMainWindow):
         self.ui.unloadBtn.clicked.connect(self.unload_microscope)
         self.ui.eyepieceRadBtn.clicked.connect(self.eyepiece_toogle)
         self.ui.snapshotBtn.clicked.connect(self.snap_image)
+        self.ui.liveToggleBtn.clicked.connect(self.live)
 
     def snap_image(self):
         img = controls.snap_image(self.mmc, exposure_time=200)
         self.ui.widget.canvas.ax.imshow(img, cmap=plt.cm.gray)
         self.ui.widget.canvas.draw()
 
+    def live(self):
+        pass
+
     def load_microscope(self):
         if self.mmc is None:
-            self.mmc = controls.loadDevices()
+            mmc = MainBackgroundThread("configs/Bright_Star.cfg")
+            self.mmc = mmc.load()
             self.mmc.initializeAllDevices()
             self.ui.loadMicroscopeBtn.setEnabled(False)
             self.ui.unloadBtn.setEnabled(True)
