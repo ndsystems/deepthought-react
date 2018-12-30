@@ -4,15 +4,6 @@ import controls
 import sys
 
 
-class MainBackgroundThread(QThread):
-    def __init__(self, filename):
-        QThread.__init__(self)
-        self.filename = filename
-
-    def load(self):
-        return controls.loadDevices(self.filename)
-
-
 class mainwindow(QtWidgets.QMainWindow):
     def __init__(self):
         super(mainwindow, self).__init__()
@@ -40,8 +31,7 @@ class mainwindow(QtWidgets.QMainWindow):
 
     def load_microscope(self):
         if self.mmc is None:
-            mmc = MainBackgroundThread("configs/Bright_Star.cfg")
-            self.mmc = mmc.load()
+            self.mmc = mmc.loadDevices()
             self.mmc.initializeAllDevices()
             self.ui.loadMicroscopeBtn.setEnabled(False)
             self.ui.unloadBtn.setEnabled(True)
