@@ -30,7 +30,14 @@ class mainwindow(QtWidgets.QMainWindow):
         self.ui.widget.canvas.draw()
 
     def live(self):
-        pass
+        if self.mmc is not None:
+            self.mmc.startContinuousSequenceAcquisition(1)
+            while self.mmc.isSequenceRunning():
+                img = self.mmc.getLastImage()
+                if self.mmc.getRemainingImageCount() > 0:
+                    img = self.mmc.getLastImage()
+                self.display_image(img)
+            self.mmc.stopSequenceAcquisition()
 
     def load_microscope(self):
         if self.mmc is None:
