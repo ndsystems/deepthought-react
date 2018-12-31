@@ -13,6 +13,7 @@ class mainwindow(QtWidgets.QMainWindow):
         self.mmc = None
         self.epiShutter = 0
         self.diaShutter = 0
+        self.stateLive = 0
         self.ui.epiToggleBtn.clicked.connect(self.epi_toggle)
         self.ui.diaToggleBtn.clicked.connect(self.dia_toggle)
         self.ui.loadMicroscopeBtn.clicked.connect(self.load_microscope)
@@ -30,14 +31,27 @@ class mainwindow(QtWidgets.QMainWindow):
         self.ui.widget.canvas.draw()
 
     def live(self):
-        if self.mmc is not None:
-            self.mmc.startContinuousSequenceAcquisition(1)
-            while self.mmc.isSequenceRunning():
+        if self.stateLive is 0:
+            self.stateLive = 1
+            self._live()
+        else:
+            self.stateLive = 0
+
+    def _live(self):
+        self.mmc.setCircularBufferMemoryFootprint(100)
+        self.mmc.startContinuousSequenceAcquisition(1)
+        while self.mmc.isSequenceRunning():
+            img = self.mmc.getLastImage()
+            if self.mmc.getRemainingImageCount() > 0:
                 img = self.mmc.getLastImage()
-                if self.mmc.getRemainingImageCount() > 0:
-                    img = self.mmc.getLastImage()
-                self.display_image(img)
-            self.mmc.stopSequenceAcquisition()
+            self.display_image(img)
+
+            if stateLive is 0:
+                self._stop_live()
+                break
+
+    def _stop_live(self):
+        self.mmc.stopSequenceAcquisition()
 
     def load_microscope(self):
         if self.mmc is None:
