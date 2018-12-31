@@ -23,6 +23,9 @@ class mainwindow(QtWidgets.QMainWindow):
 
     def snap_image(self):
         img = controls.snap_image(self.mmc, exposure_time=200)
+        self.display_image(img)
+
+    def display_image(self, img):
         self.ui.widget.canvas.ax.imshow(img, cmap="gray")
         self.ui.widget.canvas.draw()
 
