@@ -55,7 +55,7 @@ class mainwindow(QtWidgets.QMainWindow):
 
     def load_microscope(self):
         if self.mmc is None:
-            self.mmc = controls.loadDevices("configs/Bright_Star.cfg")
+            self.mmc = controls.loadDevices("\configs\Bright_Star.cfg")
             self.mmc.initializeAllDevices()
             self.ui.loadMicroscopeBtn.setEnabled(False)
             self.ui.unloadBtn.setEnabled(True)

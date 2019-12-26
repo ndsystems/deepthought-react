@@ -1,9 +1,12 @@
 import MMCorePy
+import os
+current_dir = os.getcwd()
+os.chdir("C:\Program Files\Micro-Manager-2.0gamma")
 
 
 def loadDevices(filepath):
     mmc = MMCorePy.CMMCore()
-    mmc.loadSystemConfiguration(filepath)
+    mmc.loadSystemConfiguration(current_dir + filepath)
     return mmc
 
 
