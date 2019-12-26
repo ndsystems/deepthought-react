@@ -1,12 +1,16 @@
 import MMCorePy
 import os
-current_dir = os.getcwd()
-os.chdir("C:\Program Files\Micro-Manager-2.0gamma")
+
+user_dir = os.getcwd()
+mm2_path = ["C:", "Program Files", "Micro-Manager-2.0gamma"]
+mm2_path = os.path.join(*path)
+
+os.chdir(mm2_path)
 
 
-def loadDevices(filepath):
+def loadDevices(config_path):
     mmc = MMCorePy.CMMCore()
-    mmc.loadSystemConfiguration(current_dir + filepath)
+    mmc.loadSystemConfiguration(user_dir + config_path)
     return mmc
 
 
