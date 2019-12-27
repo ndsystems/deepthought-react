@@ -27,11 +27,17 @@ class Microscope():
     def objective(self, objective):
         self.mmc.setConfig("objective", objective)
 
-    def snap(self, exposure=1):
+    def snap(self, exposure=10):
         self.mmc.setExposure(exposure)
         self.mmc.setCameraDevice("left_port")
         self.mmc.snapImage()
         return self.mmc.getImage()
+
+    def moveZ(self, value):
+        self.mmc.setPosition(value)
+
+    def moveXY(self, x, y):
+        self.mmc.setXYPosition(x, y)
 
 
 if __name__ == "__main__":
