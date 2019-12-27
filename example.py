@@ -8,4 +8,4 @@ experiment.mag("100")
 experiment.type("microirradiation")
 
 
-StageLoop(TimeLapse(27, 5))
+TimeLapse(StageLoop(experiment), 27, 5)
