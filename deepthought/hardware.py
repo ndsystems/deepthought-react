@@ -18,13 +18,21 @@ class Microscope():
     def unload(self):
         self.mmc.reset()
 
+    def state(self):
+        self.mmc.getSystemState()
+
     def channel(self, channel):
         self.mmc.setConfig("channel", channel)
 
     def objective(self, objective):
         self.mmc.setConfig("objective", objective)
 
+    def snap(self, exposure=1):
+        self.mmc.setExposure(exposure)
+        self.mmc.setCameraDevice("left_port")
+        self.mmc.snapImage()
+        return self.mmc.getImage()
+
 
 if __name__ == "__main__":
-    scope = Microscope("configs\Bright_Star.cfg")
-    scope.load()
+    pass
