@@ -18,9 +18,6 @@ class Microscope():
     def unload(self):
         self.mmc.reset()
 
-    def state(self):
-        self.mmc.getSystemState()
-
     def channel(self, channel):
         self.mmc.setConfig("channel", channel)
 
