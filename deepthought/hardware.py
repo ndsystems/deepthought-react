@@ -18,9 +18,13 @@ class Microscope():
     def unload(self):
         self.mmc.reset()
 
+    def channel(self, channel):
+        self.mmc.setConfig("channel", channel)
+
+    def objective(self, objective):
+        self.mmc.setConfig("objective", objective)
+
 
 if __name__ == "__main__":
     scope = Microscope("configs\Bright_Star.cfg")
     scope.load()
-    # ...
-    scope.unload()
