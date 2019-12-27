@@ -26,8 +26,7 @@ scope.load()
 # Useful to load default edges in positions and other parameters
 # Max Z and XY allowed for objective to avoid damages
 
-sample = Sample("35mm_IX3-HOW")
-
+sample = Sample(scope, "35mm_IX3-HOW")
 # Be more stringent with photon budget
 
 sample.alive(True)
@@ -58,21 +57,12 @@ assay.load(["all"])
 # que to exit timelapse.
 # assay here has a measuring role, where it records the data for estimation
 
-scope.explore(name="testrun",
-              sample=sample,
-              pos=sample.pos.default,
-              assay=assay)
+sample.explore(name="testrun",
+               pos="default",
+               assay=assay)
 
-# with the images stored by scope, run assay.
-assay.run("testrun")
-
-# assay is useful here for its calculated values, like tilt, but also to feed
-# back onto the scope settings, such as exposure time, if bleaching correction
-# is included.
-
-
-scope.scan(name="sphase", pos=assay.pos.sphase, assay=assay)
-scope.scan(name="not_sphase", pos=assay.pos.not_sphase, assay=assay)
-scope.timelapse(name="long_timelapse", groups=[
-                "sphase", "not_sphase"], time=30, cycle=100)
-scope.start(["long_timelapse"])
+sample.scan(name="sphase", pos=assay.pos.sphase)
+sample.scan(name="not_sphase", pos=assay.pos.not_sphase)
+sample.timelapse(name="long_timelapse", groups=[
+    "sphase", "not_sphase"], time=30, cycle=100)
+sample.start()
