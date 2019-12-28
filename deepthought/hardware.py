@@ -53,7 +53,7 @@ def create_server(HOST, PORT, scope):
                     data = conn.recv(1024)
                     if not data:
                         break
-                    conn.send(pickled_data)
+                    conn.sendall(pickled_data)
         time.sleep(1)
 
 
