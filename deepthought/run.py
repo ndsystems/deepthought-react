@@ -1,8 +1,16 @@
-import hardware
+from hardware import Microscope
 from view import dd
+import socket
+import pickle
+
+
+def from_server(HOST, PORT):
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.connect((HOST, PORT))
+        s.sendall(b'Hello, world')
+        data = s.recv(1024)
+    return pickle.loads(data)
+
 
 if __name__ == "__main__":
-    scope = hardware.Microscope("configs\Bright_Star.cfg")
-    scope.load()
-    scope.channel("BF")
-
+    scope = from_server("127.0.0.1", 2500)

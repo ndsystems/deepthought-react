@@ -1,5 +1,8 @@
 import MMCorePy
 import os
+import socket
+import pickle
+import time
 
 mm2_path = "C:\Program Files\Micro-Manager-2.0gamma"
 
@@ -24,9 +27,7 @@ class Microscope():
     def objective(self, objective):
         self.mmc.setConfig("objective", objective)
 
-    def snap(self, exposure=10):
-        self.mmc.setExposure(exposure)
-        self.mmc.setCameraDevice("left_port")
+    def snap(self):
         self.mmc.snapImage()
         return self.mmc.getImage()
 
@@ -37,5 +38,29 @@ class Microscope():
         self.mmc.setXYPosition(x, y)
 
 
+def create_server(HOST, PORT, scope):
+    pickled_data = pickle.dumps(scope)
+
+    while True:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            print("Listening...")
+            s.bind((HOST, PORT))
+            s.listen()
+            conn, addr = s.accept()
+            with conn:
+                print('Connected by', addr)
+                while True:
+                    data = conn.recv(1024)
+                    if not data:
+                        break
+                    conn.send(pickled_data)
+        time.sleep(1)
+
+
 if __name__ == "__main__":
-    pass
+    microscope = Microscope("config/Bright_Star.cfg")
+
+    HOST = '127.0.0.1'
+    PORT = 2500
+
+    create_server(HOST, PORT, microscope)
