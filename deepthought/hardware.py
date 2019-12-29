@@ -1,9 +1,11 @@
 import MMCorePy
 import os
 import socket
+import SocketServer
 import pickle
 import time
 from contextlib import closing
+
 
 mm2_path = "C:\Program Files\Micro-Manager-2.0gamma"
 
@@ -14,8 +16,7 @@ class Microscope():
         self.user_dir = os.getcwd()
 
     def version(self):
-        self.mmc.getVersionInfo()
-        self.mmc.getAPIVersionInfo()
+        return(self.mmc.getAPIVersionInfo())
 
     def load(self):
         self.mmc = MMCorePy.CMMCore()
@@ -43,28 +44,37 @@ class Microscope():
         self.mmc.setXYPosition(x, y)
 
 
-def create_server(HOST, PORT, scope):
-    pickled_data = pickle.dumps(scope)
+if __name__ == "__main__":
+    def run_scope_command(scope, command):
+        exec("scope."+command)
+        print("scope."+command)
+
+    scope = Microscope("configs/Bright_Star.cfg")
+    scope.load()
+    print("Scope loaded")
+
+    host, port = "localhost", 2500
 
     while True:
-        with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as s:
-            print("Listening...")
-            s.bind((HOST, PORT))
-            s.listen(2)
-            conn, addr = s.accept()
-            with closing(conn):
-                print('Connected by', addr)
-                while True:
-                    data = conn.recv(1024)
-                    if not data:
-                        break
-                    conn.sendall(pickled_data)
-        time.sleep(1)
+        server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        server.bind((host, port))
+        server.listen(2)
 
+        conn, addr = server.accept()
+        while True:
+            data = conn.recv(1024)
 
-if __name__ == "__main__":
-    microscope = Microscope("configs/Bright_Star.cfg")
+            if data == "bye":
+                break
+            if data == "byebye":
+                exit()
 
-    HOST = '127.0.0.1'
-    PORT = 2500
-    create_server(HOST, PORT, microscope)
+            elif "mmc" in data.strip():
+                comm = run_scope_command(scope, data)
+                conn.send(data)
+            else:
+                print(data)
+
+            time.sleep(1)
+
+        server.close()
