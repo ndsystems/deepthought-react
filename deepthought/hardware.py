@@ -3,6 +3,7 @@ import os
 import socket
 import pickle
 import time
+from contextlib import closing
 
 mm2_path = "C:\Program Files\Micro-Manager-2.0gamma"
 
@@ -11,6 +12,10 @@ class Microscope():
     def __init__(self, config_path):
         self.config_path = os.path.abspath(config_path)
         self.user_dir = os.getcwd()
+
+    def version(self):
+        self.mmc.getVersionInfo()
+        self.mmc.getAPIVersionInfo()
 
     def load(self):
         self.mmc = MMCorePy.CMMCore()
@@ -42,12 +47,12 @@ def create_server(HOST, PORT, scope):
     pickled_data = pickle.dumps(scope)
 
     while True:
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as s:
             print("Listening...")
             s.bind((HOST, PORT))
-            s.listen()
+            s.listen(2)
             conn, addr = s.accept()
-            with conn:
+            with closing(conn):
                 print('Connected by', addr)
                 while True:
                     data = conn.recv(1024)
@@ -58,9 +63,8 @@ def create_server(HOST, PORT, scope):
 
 
 if __name__ == "__main__":
-    microscope = Microscope("config/Bright_Star.cfg")
+    microscope = Microscope("configs/Bright_Star.cfg")
 
     HOST = '127.0.0.1'
     PORT = 2500
-
     create_server(HOST, PORT, microscope)
