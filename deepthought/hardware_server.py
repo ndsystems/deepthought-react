@@ -4,7 +4,7 @@ import time
 import os
 
 
-def process_data(scope, data):
+def process_data(mmc, data):
     """this should have a way to receive function and the parameters from
     client"""
 
@@ -16,7 +16,7 @@ def process_data(scope, data):
     exec(command)
 
 
-def run_server(scope):
+def run_server(mmc):
     host, port = "localhost", 2500
     print("LISTENING ")
     while True:
@@ -38,6 +38,6 @@ def run_server(scope):
 
 if __name__ == "__main__":
     user_dir = os.getcwd()
-    scope = load("configs/demo.cfg")
+    mmc = load("configs/demo.cfg")
     print("Microscope loaded.")
-    run_server(scope)
+    run_server(mmc)
