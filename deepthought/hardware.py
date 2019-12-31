@@ -5,11 +5,10 @@ import os
 mm2_path = "C:\Program Files\Micro-Manager-2.0gamma"
 
 
-def load(config_file_path):
+def load(config_path):
+    config_abspath = os.path.abspath(config_path)
     os.chdir(mm2_path)
-    config_file_abspath = os.path.abspath(config_file_path)
-
     mmc = MMCorePy.CMMCore()
-    mmc.loadSystemConfiguration(config_path)
+    mmc.loadSystemConfiguration(config_abspath)
 
     return mmc
