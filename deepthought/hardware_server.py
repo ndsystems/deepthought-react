@@ -2,18 +2,41 @@ from hardware import load
 import socket
 import time
 import os
+import pickle
 
 
 def process_data(mmc, data):
     """this should have a way to receive function and the parameters from
     client"""
 
-    data_dict = data.loads(data)
-    function_name = data["function"]
-    arguments = data["arguments"]
+    if data == "exit":
+        print("Exiting on request")
+        exit()
 
-    command = "mmc.function_name(**arguments)"
+    data_dict = pickle.loads(data)
+
+    function_name = data_dict["function"]
+    arguments = data_dict["arguments"]
+
+    argument_name = ''
+    for a in arguments:
+        if type(a) is str:
+            temp = '"{}", '.format(a)
+        else:
+            temp = '{}, '.format(a)
+        argument_name += temp
+
+    argument_name = argument_name[:-2]
+
+
+    command = 'value = mmc.{}({})'.format(function_name, argument_name)
     exec(command)
+    
+    print(command)
+    print(value)
+
+    send = pickle.dumps({"value" : value})
+    return send
 
 
 def run_server(mmc):
@@ -27,12 +50,12 @@ def run_server(mmc):
         connection, address = server.accept()
         print("Accepted Connection from: ", address)
         while True:
-            in_data = connection.recv(1024)
-            out_data = process_data(scope, in_data)
-            connection.send(out_data)
+            client_data = connection.recv(4096)
+            server_data = process_data(mmc, client_data)
+            connection.send(server_data)
 
             time.sleep(1)
-        server.close()
+    server.close()
     return
 
 

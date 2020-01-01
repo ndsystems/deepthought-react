@@ -1,26 +1,52 @@
-from hardware import Microscope
-from view import dd
 import socket
 import pickle
-from contextlib import closing
 
-"""
-    def channel(self, channel):
-        self.mmc.setConfig("channel", channel)
 
-    def objective(self, objective):
-        self.mmc.setConfig("objective", objective)
+def command(fn, *args):
+    cmd = {
+        "function": fn,
+        "arguments": args
+    }
+    return pickle.dumps(cmd)
+
+
+class Control:
+    def __init__(self, server):
+        self.server = server
+
+    def command(self, cmd):
+        cmd = command(cmd)
+        self.server.send(cmd)
+
+    def send_command(self, command):
+        self.server.send(command)
+
+    def get_response(self):
+        print(self.server.get())
+
+    def channel(channel):
+        cmd = command("setConfig", "channel", channel)
+        self.send_command(cmd)
+
+    def objective(objective):
+        cmd = command("setConfig", "objective", objective)
+        self.send_command(cmd)
 
     def snap(self):
-        self.mmc.snapImage()
-        return self.mmc.getImage()
+        cmd = command("snapImage")
+        self.send_command(cmd)
 
-    def moveZ(self, value):
-        self.mmc.setPosition(value)
+    def getImage(self):
+        cmd = command("getImage")
+        self.send_command(cmd)
 
-    def moveXY(self, x, y):
-        self.mmc.setXYPosition(x, y)
-"""
+    def moveZ(value):
+        cmd = command("setPosition", value)
+        self.send_command(cmd)
+
+    def moveXY(x, y):
+        cmd = command("setXYPosition", x, y)
+        self.send_command(cmd)
 
 
 class Connect:
@@ -36,17 +62,15 @@ class Connect:
         self.s.sendall(message)
 
     def get(self):
-        received = str(self.s.recv(1024))
+        received = pickle.loads(self.s.recv(4096))
         return received
 
     def close(self):
         self.s.close()
 
 
-# write a live program here.
 if __name__ == "__main__":
     server = Connect("localhost", 2500)
     server.connect()
-    server.send("""mmc.setConfig("channel", "BF")""")
-    # server.send("mmc.snapImage()")
-     # server.send("mmc.getImage()")
+    scope = Control(server)
+    scope.snap()
