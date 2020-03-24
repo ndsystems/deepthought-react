@@ -1,8 +1,26 @@
-from hardware import load
 import socket
 import time
 import os
 import pickle
+import MMCorePy
+import os
+
+
+windows7_path = "C:\Program Files\Micro-Manager-2.0gamma"
+
+
+def load_config(config_path):
+    config_abspath = os.path.abspath(config_path)
+
+    # when running in windows computer, the python path has to be mmc path
+    # for the drivers to load correctly.
+
+    if os.name == 'nt':
+        os.chdir(windows7_path)
+
+    mmc = MMCorePy.CMMCore()
+    mmc.loadSystemConfiguration(config_abspath)
+    return mmc
 
 
 def process_data(mmc, data):
@@ -28,14 +46,13 @@ def process_data(mmc, data):
 
     argument_name = argument_name[:-2]
 
-
     command = 'value = mmc.{}({})'.format(function_name, argument_name)
     exec(command)
-    
+
     print(command)
     print(value)
 
-    send = pickle.dumps({"value" : value})
+    send = pickle.dumps({"value": value})
     return send
 
 
@@ -61,6 +78,11 @@ def run_server(mmc):
 
 if __name__ == "__main__":
     user_dir = os.getcwd()
-    mmc = load("configs/demo.cfg")
+    mmc = load_config("configs/demo.cfg")
     print("Microscope loaded.")
-    run_server(mmc)
+
+    try:
+        run_server(mmc)
+
+    except KeyboardInterrupt:
+        exit()
