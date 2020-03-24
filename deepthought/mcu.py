@@ -1,3 +1,13 @@
+"""
+Microscope Control Unit (mcu)
+
+Separates the functions that are essential to communicate to the microscope
+using the micromanager API.
+
+This part of the code is in python 2.7 since Micro-manager lacks python3
+support for now.
+
+"""
 import socket
 import time
 import os
@@ -56,24 +66,39 @@ def process_data(mmc, data):
     return send
 
 
-def run_server(mmc):
+def create_mcu_server(mmc):
     host, port = "localhost", 2500
     print("LISTENING ")
+
+    server_socket = tcp_server(host, port)
+
     while True:
-        server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        server.bind((host, port))
-        server.listen(2)
+        client_socket, address = server_socket.accept()
+        print("Accepted connection from: ", address)
+        server_data = accept_callback(client_socket)
 
-        connection, address = server.accept()
-        print("Accepted Connection from: ", address)
-        while True:
-            client_data = connection.recv(4096)
-            server_data = process_data(mmc, client_data)
-            connection.send(server_data)
-
-            time.sleep(1)
-    server.close()
     return
+
+
+def tcp_server(host, port):
+    serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    serversocket.bind((host, port))
+    serversocket.listen(5)
+    return serversocket
+
+
+def accept_callback(client):
+    # test callback
+    while True:
+        client_data = client.recv(4096)
+
+        if not client_data:
+            break
+
+        if "exit" in str(client_data):
+            exit()
+
+        print(client_data)
 
 
 if __name__ == "__main__":
@@ -82,7 +107,7 @@ if __name__ == "__main__":
     print("Microscope loaded.")
 
     try:
-        run_server(mmc)
+        create_mcu_server(mmc)
 
     except KeyboardInterrupt:
         exit()
