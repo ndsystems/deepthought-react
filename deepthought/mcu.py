@@ -103,13 +103,15 @@ def tcp_server(host="localhost", port=2500):
     # tcp server takes optional host and port
 
     # a IPv4 TCP socket is created
-    serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    # gets rid of the address in use error
+    server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
     # in case the port is not available, try to bind to the next one
     # do it untill you can bind
     while True:
         try:
-            serversocket.bind((host, port))
+            server_socket.bind((host, port))
 
         except OSError:
             port = port + 1
@@ -118,10 +120,10 @@ def tcp_server(host="localhost", port=2500):
         break
 
     # upto 5 clients can connect (arbitrary for now)
-    serversocket.listen(5)
+    server_socket.listen(5)
 
     print("LISTENING on %s %s" % (host, port))
-    return serversocket
+    return server_socket
 
 
 def accept_callback(client):
