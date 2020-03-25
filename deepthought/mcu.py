@@ -72,14 +72,16 @@ def parse_command(data_dict):
 
     argument_name = argument_name[:-2]
 
-    command_str = 'value = mmc.{}({})'.format(function_name, argument_name)
+    method_string = 'mmc.{}({})'.format(function_name, argument_name)
 
-    return command_str
+    return method_string
 
 
-def evaluate_mmc_command(command_str):
+def evaluate_mmc(method_string):
     # function evaulates string that is expected to call a method on mmc class
-    command = command_str.replace("mmc.", "load_mmc.mmc.")
+
+    # mmc is accessible with load_mmc.mmc
+    command = method_string.replace("mmc.", "load_mmc.mmc.")
 
     # catch exceptions here that are related to mmc
     # eval can actually be separated to another function, for easier logging
@@ -96,6 +98,7 @@ def evaluate_mmc_command(command_str):
 
 def tcp_server(host="localhost", port=2500):
     # tcp server takes optional host and port
+
     # a IPv4 TCP socket is created
     serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -146,7 +149,7 @@ def accept_callback(client):
         elif "mmc." in str(client_data):
             # for directly calling mmc methods
             message = client_data.decode()
-            mmc_answer = evaluate_mmc_command(message)
+            mmc_answer = evaluate_mmc(message)
             send_mmc_answer(mmc_answer)
 
 
@@ -183,6 +186,7 @@ def send_mmc_answer(mmc_answer):
 
 if __name__ == "__main__":
     user_dir = os.getcwd()
+
     mmc = load_mmc("configs/demo.cfg")
     print("Microscope loaded.")
 
