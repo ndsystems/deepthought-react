@@ -7,6 +7,9 @@ using the micromanager API.
 This part of the code is in python 2.7 since Micro-manager lacks python3
 support for now.
 
+mmc - micro manager core
+https://valelab4.ucsf.edu/~MM/doc/MMCore/html/class_c_m_m_core.html
+
 """
 import os
 import socket
