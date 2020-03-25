@@ -134,7 +134,9 @@ def accept_callback(client):
     # this can be replaced with a chain of responsibility design pattern
 
     while True:
-        client_data = client.recv(4096)
+        # this loop is for when we want to keep recv-ing from a connected
+        # client
+        client_data = client.recv(4096) # blocking call
 
         if not client_data:
             break
@@ -169,7 +171,8 @@ def create_mcu_server(mmc):
     server_socket = tcp_server()
 
     while True:
-        client_socket, address = server_socket.accept()
+        # this loop is for constantly looking for connections
+        client_socket, address = server_socket.accept() # blocking call
         print("Accepted connection from: ", address)
         server_data = accept_callback(client_socket)
         client_socket.close()
