@@ -84,7 +84,12 @@ def evaluate_mmc_command(command_str):
     # catch exceptions here that are related to mmc
     # eval can actually be separated to another function, for easier logging
     # purpose.
-    value = eval(command)
+
+    try:
+        value = eval(command)
+
+    except:
+        return "error:mmc"
 
     return value
 
@@ -109,7 +114,7 @@ def tcp_server(host="localhost", port=2500):
     # upto 5 clients can connect (arbitrary for now)
     serversocket.listen(5)
 
-    print("LISTENING on %s:%s" % (host, port))
+    print("LISTENING on %s %s" % (host, port))
     return serversocket
 
 
@@ -140,7 +145,6 @@ def accept_callback(client):
 
         elif "mmc." in str(client_data):
             # for directly calling mmc methods
-            print("mmc is here")
             message = client_data.decode()
             mmc_answer = evaluate_mmc_command(message)
             send_mmc_answer(mmc_answer)
@@ -170,7 +174,6 @@ def send_mmc_answer(mmc_answer):
     # a new object with the data, which can be pickled, and sent to the client.
     # it can be images as numpy arrays, or any other python data structure -
     # like the list of x,y or ZDC offset value, etc.
-
 
     # for now, print in console
 
