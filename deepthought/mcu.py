@@ -19,7 +19,7 @@ import os
 windows7_path = "C:\Program Files\Micro-Manager-2.0gamma"
 
 
-def load_config(config_path):
+def load_mmc(config_path):
     config_abspath = os.path.abspath(config_path)
 
     # when running in windows computer, the python path has to be mmc path
@@ -28,25 +28,31 @@ def load_config(config_path):
     if os.name == 'nt':
         os.chdir(windows7_path)
 
-    mmc = MMCorePy.CMMCore()
-    mmc.loadSystemConfiguration(config_abspath)
-    return mmc
+    mmc_ = MMCorePy.CMMCore()
+    mmc_.loadSystemConfiguration(config_abspath)
+
+    # trick to make the mmc accesible everywhere.
+    load_mmc.mmc = mmc_
+
+    return mmc_
 
 
-def process_data(mmc, data):
-    """this should have a way to receive function and the parameters from
-    client"""
+def unload_mmc():
+    load_mmc.mmc.reset()
 
-    if data == "exit":
-        print("Exiting on request")
-        exit()
 
-    data_dict = pickle.loads(data)
+def shutdown():
+    # unload microscope and exit
+    unload_mmc()
+    exit()
 
+
+def parse_command(data_dict):
     function_name = data_dict["function"]
     arguments = data_dict["arguments"]
 
     argument_name = ''
+
     for a in arguments:
         if type(a) is str:
             temp = '"{}", '.format(a)
@@ -56,21 +62,20 @@ def process_data(mmc, data):
 
     argument_name = argument_name[:-2]
 
-    command = 'value = mmc.{}({})'.format(function_name, argument_name)
-    exec(command)
+    command_str = 'value = mmc.{}({})'.format(function_name, argument_name)
 
-    print(command)
-    print(value)
+    return command_str
 
-    send = pickle.dumps({"value": value})
-    return send
+
+def execute_command(command_str):
+    # function to execute the code in a string
+    command = command_str.replace("mmc.", "load_mmc.mmc.")
+    value = eval(command)
+    return value
 
 
 def create_mcu_server(mmc):
-    host, port = "localhost", 2500
-    print("LISTENING ")
-
-    server_socket = tcp_server(host, port)
+    server_socket = tcp_server()
 
     while True:
         client_socket, address = server_socket.accept()
@@ -80,10 +85,20 @@ def create_mcu_server(mmc):
     return
 
 
-def tcp_server(host, port):
+def tcp_server(host="localhost", port=2500):
     serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    serversocket.bind((host, port))
+    while True:
+        try:
+            serversocket.bind((host, port))
+
+        except OSError:
+            port = port + 1
+            continue
+        break
+
     serversocket.listen(5)
+    print("LISTENING on %s:%s" % (host, port))
+
     return serversocket
 
 
@@ -95,19 +110,28 @@ def accept_callback(client):
         if not client_data:
             break
 
-        if "exit" in str(client_data):
-            exit()
+        elif "shutdown" in str(client_data):
+            # safety
+            shutdown()
 
-        print(client_data)
+        elif "mmc." in str(client_data):
+            # for easy testing thru netcat
+            client_data = client_data.decode()
+            execute_command(client_data)
+
+        else:
+            # the current client comm protocol
+            command = parse_command(client_data)
+            execute_command(command)
 
 
 if __name__ == "__main__":
     user_dir = os.getcwd()
-    mmc = load_config("configs/demo.cfg")
+    mmc = load_mmc("configs/demo.cfg")
     print("Microscope loaded.")
 
     try:
         create_mcu_server(mmc)
 
     except KeyboardInterrupt:
-        exit()
+        shutdown()
