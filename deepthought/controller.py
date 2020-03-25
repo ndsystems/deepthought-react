@@ -13,6 +13,10 @@ class Controller():
         cmd = setConfig("objective", obj)
         return self.send_command(cmd)
 
+    def channel(self, ch):
+        cmd = setConfig("channel", ch)
+        return self.send_command(cmd)
+
     def snap(self):
         cmd = "mmc.snapImage()"
         return self.send_command(cmd)
