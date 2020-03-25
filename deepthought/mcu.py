@@ -143,6 +143,10 @@ def accept_callback(client):
             # testing the connection
             print("pong")
 
+        elif "break" in str(client_data):
+            # breaks the recv block
+            break
+
         elif "shutdown" in str(client_data):
             # safety
             shutdown()
