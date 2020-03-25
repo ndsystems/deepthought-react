@@ -15,7 +15,6 @@ import os
 import socket
 import MMCorePy
 
-
 windows7_path = "C:\Program Files\Micro-Manager-2.0gamma"
 
 
@@ -56,28 +55,6 @@ def shutdown():
     # unload microscope and exit
     unload_mmc()
     exit()
-
-
-def parse_command(data_dict):
-    # this function needs to be redesigned depending on the new comm protocol.
-
-    function_name = data_dict["function"]
-    arguments = data_dict["arguments"]
-
-    argument_name = ''
-
-    for a in arguments:
-        if type(a) is str:
-            temp = '"{}", '.format(a)
-        else:
-            temp = '{}, '.format(a)
-        argument_name += temp
-
-    argument_name = argument_name[:-2]
-
-    method_string = 'mmc.{}({})'.format(function_name, argument_name)
-
-    return method_string
 
 
 def evaluate_mmc(method_string):
@@ -126,7 +103,7 @@ def tcp_server(host="localhost", port=2500):
     return server_socket
 
 
-def accept_callback(client):
+def accept_callback(client_socket):
     # function that is called after a connection is accepted
 
     # the main loop
@@ -136,7 +113,7 @@ def accept_callback(client):
     while True:
         # this loop is for when we want to keep recv-ing from a connected
         # client
-        client_data = client.recv(4096) # blocking call
+        client_data = client_socket.recv(4096)  # blocking call
 
         if not client_data:
             break
@@ -159,9 +136,9 @@ def accept_callback(client):
 
         elif "mmc." in str(client_data):
             # for directly calling mmc methods
-            message = client_data.decode()
-            mmc_answer = evaluate_mmc(message)
-            send_mmc_answer(mmc_answer)
+            command = client_data.decode()
+            mmc_answer = evaluate_mmc(command)
+            send_mmc_answer(client_socket, mmc_answer)
 
 
 def create_mcu_server(mmc):
@@ -172,14 +149,14 @@ def create_mcu_server(mmc):
 
     while True:
         # this loop is for constantly looking for connections
-        client_socket, address = server_socket.accept() # blocking call
+        client_socket, address = server_socket.accept()  # blocking call
         print("Accepted connection from: ", address)
         server_data = accept_callback(client_socket)
         client_socket.close()
     return
 
 
-def send_mmc_answer(mmc_answer):
+def send_mmc_answer(client_socket, mmc_answer):
     # send data to the client
 
     # not possible to send mmc object over socket because pickling is not
@@ -190,9 +167,9 @@ def send_mmc_answer(mmc_answer):
     # it can be images as numpy arrays, or any other python data structure -
     # like the list of x,y or ZDC offset value, etc.
 
-    # for now, print in console
-
     print(mmc_answer)
+    client_socket.sendall(str(mmc_answer).encode())
+
     pass
 
 
