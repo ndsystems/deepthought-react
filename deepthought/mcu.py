@@ -120,7 +120,7 @@ def accept_callback(client_socket):
 
         elif "ping" in str(client_data):
             # testing the connection
-            print("pong")
+            send_mmc_answer(client_socket, "pong\n")
 
         elif "break" in str(client_data):
             # breaks the recv block
@@ -155,6 +155,9 @@ def create_mcu_server(mmc):
         client_socket.close()
     return
 
+def serialize(data):
+    pass
+
 
 def send_mmc_answer(client_socket, mmc_answer):
     # send data to the client
@@ -167,8 +170,9 @@ def send_mmc_answer(client_socket, mmc_answer):
     # it can be images as numpy arrays, or any other python data structure -
     # like the list of x,y or ZDC offset value, etc.
 
-    print(mmc_answer)
-    client_socket.sendall(str(mmc_answer).encode())
+    print("sending: ", mmc_answer)
+    serialized_mmc_answer = serialize(mmc_answer)
+    client_socket.sendall(serialized_mmc_answer)
 
     pass
 
