@@ -1,11 +1,13 @@
 """
 Microscope Control Unit (mcu)
 
-Separates the functions that are essential to communicate to the microscope
-using the micromanager API.
+Separates the functions that are essential to operate the microscope
+for specific higher order tasks, mostly wrapping around micromanager API.
 
 This part of the code is in python 2.7 since Micro-manager lacks python3
-support for now.
+support in windows with the build that I have installed - mm2.0g. 
+Update: Although I have seen mention of python3 support for
+windows now, which needs to be explored.
 
 mmc - micro manager core
 https://valelab4.ucsf.edu/~MM/doc/MMCore/html/class_c_m_m_core.html
@@ -113,14 +115,21 @@ def accept_callback(client_socket):
     while True:
         # this loop is for when we want to keep recv-ing from a connected
         # client
-        client_data = client_socket.recv(4096)  # blocking call
+
+        # Connection resets crashes the server
+        try:
+            client_data = client_socket.recv(4096)  # blocking call
+
+        except (ConnectionResetError):
+            print("Dropped.")
+            break
 
         if not client_data:
             break
 
         elif "ping" in str(client_data):
             # testing the connection
-            send_mmc_answer(client_socket, "pong\n")
+            send_mmc_reply(client_socket, "pong\r")
 
         elif "break" in str(client_data):
             # breaks the recv block
@@ -137,8 +146,8 @@ def accept_callback(client_socket):
         elif "mmc." in str(client_data):
             # for directly calling mmc methods
             command = client_data.decode()
-            mmc_answer = evaluate_mmc(command)
-            send_mmc_answer(client_socket, mmc_answer)
+            mmc_reply = evaluate_mmc(command)
+            send_mmc_reply(client_socket, mmc_reply)
 
 
 def create_mcu_server(mmc):
@@ -155,11 +164,19 @@ def create_mcu_server(mmc):
         client_socket.close()
     return
 
+
 def serialize(data):
-    pass
+    if type(data) is str:
+        serialized_data = data.encode()
+        print()
+
+    else:
+        print(serialized_data)
+
+    return serialized_data
 
 
-def send_mmc_answer(client_socket, mmc_answer):
+def send_mmc_reply(client_socket, mmc_reply):
     # send data to the client
 
     # not possible to send mmc object over socket because pickling is not
@@ -170,9 +187,8 @@ def send_mmc_answer(client_socket, mmc_answer):
     # it can be images as numpy arrays, or any other python data structure -
     # like the list of x,y or ZDC offset value, etc.
 
-    print("sending: ", mmc_answer)
-    serialized_mmc_answer = serialize(mmc_answer)
-    client_socket.sendall(serialized_mmc_answer)
+    serialized_mmc_reply = serialize(mmc_reply)
+    client_socket.sendall(serialized_mmc_reply)
 
     pass
 
