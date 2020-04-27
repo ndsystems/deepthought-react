@@ -17,28 +17,32 @@ class TCPCore:
 
     def recv(self):
         # higher level acesss to recv data from mcu
+
         received = self.mcu_socket.recv(4096)
         return received
 
 
 class TCPControl(TCPCore):
-    # this isolates the logic for the communication protocol.
-
     def send_command(self, message):
         # what happens when a command is sent from the controller
-
         serialized_message = self.serialize(message)
         self.send(serialized_message)
-
         response = self.recv()
         data = self.deserialize(response)
         return data
 
+    # this isolates the logic for the communication protocol.
     def serialize(self, message):
         return message.encode()
 
     def deserialize(self, response):
-        print(response)  # for debugging
+        try:
+            deserialized = response.decode()
+
+        except UnicodeDecodeError:
+            deserialized = pickle.loads(response)
+
+        return deserialized
 
 
 class BaseController(TCPControl):
@@ -55,6 +59,14 @@ class BaseController(TCPControl):
         response = self.send_command("mmc.getImage()")
         image = self.deserialize(response)
         return image
+
+    def getPosition(self):
+        cmd = f"mmc.getPosition()"
+        return self.send_command(cmd)
+
+    def getXYPosition(self):
+        cmd = f"mmc.getXYPosition()"
+        return self.send_command(cmd)
 
     def setPosition(self, val):
         cmd = f"mmc.setPosition({val})"
@@ -73,11 +85,18 @@ class BaseController(TCPControl):
         return self.send_command(cmd)
 
 
-class DebugControl(BaseController):
+class AcquisitionControl(BaseController):
+    def image(self, exposure=10):
+        # set exposure
+        self.snapImage()
+        img = self.getXYPosition()
+        print(img)
+        return img
+
     def test(self):
         print(self.send_command("ping"))
 
 
 if __name__ == "__main__":
-    scope = DebugControl("localhost", 2500)
-    scope.test()
+    scope = AcquisitionControl("localhost", 2500)
+    scope.image()
