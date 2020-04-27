@@ -72,8 +72,9 @@ class Microscope:
             value = eval(f"self.{command}")
 
         except Exception as e:
-            logging.error(f"unknown mmc command: {command}", exc_info=True)
-            return "error:mmc"
+            msg = f"unknown mmc command: {command}"
+            logging.error(msg, exc_info=True)
+            return msg
 
         return value
 
@@ -108,6 +109,7 @@ class MicroscopeServer(Microscope):
 
         else:
             serialized_data = pickle.dumps(data)
+
         return serialized_data
 
     def send(self, reply):
@@ -139,21 +141,24 @@ class MicroscopeServer(Microscope):
             if "ping" in str(client_data):
                 # testing the connection
                 logging.info("ping")
-                # send_mmc_reply(client_socket, "pong\r")
+                self.send("pong\r")
 
             elif "break" in str(client_data):
                 # breaks the recv block
                 logging.info("break")
+                self.send("breaking\r")
                 self.client_socket.shutdown(1)
                 break
 
             elif "shutdown" in str(client_data):
                 logging.info("shutdown")
+                self.send("shutting down\r")
+                self.client_socket.shutdown(1)
                 self.shutdown()
 
             elif "status" in str(client_data):
                 logging.info("status")
-                # print the status of the microscope
+                self.send("status ...")
                 pass
 
             elif "mmc." in str(client_data):
@@ -162,6 +167,9 @@ class MicroscopeServer(Microscope):
                 logging.info(command)
                 mmc_reply = self.execute(command)
                 self.send(mmc_reply)
+            else:
+                logging.debug(f"unknown message from client: {message}")
+                self.send("unknown message")
 
 
 if __name__ == "__main__":
