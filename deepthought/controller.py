@@ -28,12 +28,12 @@ class TCPControl(TCPCore):
         serialized_message = self.serialize(message)
         self.send(serialized_message)
         response = b""
-        
+
         while True:
             response += self.recv()
             if b"END" in response:
                 break
-        
+
         response = response[:-3]
 
         data = self.deserialize(response)
@@ -60,13 +60,12 @@ class BaseController(TCPControl):
         return cmd
 
     def snapImage(self):
-        response = self.send_command("mmc.snapImage()")
-        return response
+        cmd = "mmc.snapImage()"
+        return self.send_command(cmd)
 
     def getImage(self):
-        response = self.send_command("mmc.getImage()")
-        image = self.deserialize(response)
-        return image
+        cmd = "mmc.getImage()"
+        return self.send_command(cmd)
 
     def getPosition(self):
         cmd = f"mmc.getPosition()"
@@ -97,14 +96,10 @@ class AcquisitionControl(BaseController):
     def image(self, exposure=10):
         # set exposure
         self.snapImage()
-        img = self.getXYPosition()
-        print(img)
+        img = self.getImage()
         return img
-
-    def test(self):
-        print(self.send_command("ping"))
 
 
 if __name__ == "__main__":
     scope = AcquisitionControl("localhost", 2500)
-    scope.image()
+    print(scope.image())
