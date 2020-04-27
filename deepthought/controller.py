@@ -1,5 +1,6 @@
 import socket
 import pickle
+import time
 
 
 class TCPCore:
@@ -75,12 +76,16 @@ class BaseController(TCPControl):
         cmd = f"mmc.getXYPosition()"
         return self.send_command(cmd)
 
-    def setPosition(self, val):
-        cmd = f"mmc.setPosition({val})"
+    def setPosition(self, z_value):
+        cmd = f"mmc.setPosition({z_value})"
         return self.send_command(cmd)
 
     def setXYPosition(self, x, y):
         cmd = f"mmc.setXYPosition({x}, {y})"
+        return self.send_command(cmd)
+
+    def setExposure(self, exposure_time):
+        cmd = f"mmc.setExposure({exposure_time})"
         return self.send_command(cmd)
 
     def objective(self, obj):
@@ -93,13 +98,22 @@ class BaseController(TCPControl):
 
 
 class AcquisitionControl(BaseController):
-    def image(self, exposure=10):
-        # set exposure
+    def image(self):
         self.snapImage()
         img = self.getImage()
         return img
 
+    def timelapse(self, cycles, timestep):
+        # a simple timelapse function
+        images = []
+        for i in range(cycles):
+            snap = self.image()
+            print(snap)
+            images.append(snap)
+            time.sleep(timestep)
+
 
 if __name__ == "__main__":
     scope = AcquisitionControl("localhost", 2500)
-    print(scope.image())
+    scope.setExposure(100)
+    scope.timelapse(cycles=10, timestep=1)
