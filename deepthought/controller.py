@@ -27,7 +27,15 @@ class TCPControl(TCPCore):
         # what happens when a command is sent from the controller
         serialized_message = self.serialize(message)
         self.send(serialized_message)
-        response = self.recv()
+        response = b""
+        
+        while True:
+            response += self.recv()
+            if b"END" in response:
+                break
+        
+        response = response[:-3]
+
         data = self.deserialize(response)
         return data
 

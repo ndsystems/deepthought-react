@@ -72,9 +72,9 @@ class Microscope:
             value = eval(f"self.{command}")
 
         except Exception as e:
-            msg = f"unknown mmc command: {command}"
-            logging.error(msg, exc_info=True)
-            return msg
+            error_msg = f"unknown mmc command: {command}"
+            logging.error(error_msg, exc_info=True)
+            return error_msg
 
         return value
 
@@ -108,13 +108,22 @@ class MicroscopeServer(Microscope):
             serialized_data = data.encode()
 
         else:
-            serialized_data = pickle.dumps(data)
+            try:
+                serialized_data = pickle.dumps(data)
+            
+            except Exception as e:
+                error_msg = "pickling error"
+                logging.error(error_msg, exc_info=True)
+                
+                serialized_data = error_msg.encode()
 
-        return serialized_data
+
+        return serialized_data + b"END"
 
     def send(self, reply):
         """send data to the client"""
         serialized_mmc_reply = self.serialize(reply)
+        print(reply)
         self.client_socket.sendall(serialized_mmc_reply)
 
     def callback(self):
@@ -168,9 +177,7 @@ class MicroscopeServer(Microscope):
                 mmc_reply = self.execute(command)
                 self.send(mmc_reply)
             else:
-                logging.debug(f"unknown message from client: {message}")
-                self.send("unknown message")
-
+                pass
 
 if __name__ == "__main__":
     user_dir = os.getcwd()
