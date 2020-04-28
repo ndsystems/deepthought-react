@@ -110,13 +110,11 @@ class MicroscopeServer(Microscope):
         else:
             try:
                 serialized_data = pickle.dumps(data)
-            
+
             except Exception as e:
                 error_msg = "pickling error"
                 logging.error(error_msg, exc_info=True)
-                
                 serialized_data = error_msg.encode()
-
 
         return serialized_data + b"END"
 
@@ -167,8 +165,10 @@ class MicroscopeServer(Microscope):
 
             elif "status" in str(client_data):
                 logging.info("status")
-                self.send("status ...")
-                pass
+                mmc_reply = self.execute("mmc.getSystemState()")
+                formatted = mmc_reply.getVerbose()
+                formatted = formatted.replace("<br>", "\n")
+                self.send(formatted)
 
             elif "mmc." in str(client_data):
                 # for directly calling mmc methods
@@ -178,6 +178,7 @@ class MicroscopeServer(Microscope):
                 self.send(mmc_reply)
             else:
                 pass
+
 
 if __name__ == "__main__":
     user_dir = os.getcwd()
