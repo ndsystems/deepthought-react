@@ -116,4 +116,6 @@ class AcquisitionControl(BaseController):
 if __name__ == "__main__":
     scope = AcquisitionControl("localhost", 2500)
     scope.setExposure(100)
-    scope.timelapse(cycles=10, timestep=1)
+    # scope.timelapse(cycles=10, timestep=1)
+    img = scope.image()
+    
