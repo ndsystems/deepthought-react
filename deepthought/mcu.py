@@ -7,6 +7,9 @@ for specific higher order tasks, mostly wrapping around micromanager API.
 mmc - micro manager core
 https://valelab4.ucsf.edu/~MM/doc/MMCore/html/class_c_m_m_core.html
 
+problems: pickling swig objects
+https://stackoverflow.com/questions/9310053/how-to-make-my-swig-extension-module-work-with-pickle
+
 """
 import os
 import sys
@@ -16,7 +19,6 @@ import pickle
 import MMCorePy
 
 windows7_path = "C:\Program Files\Micro-Manager-2.0gamma"
-linux_path = "/home/dna/lab/software/micromanager/lib/micro-manager"
 
 
 class TCPServerCore:
@@ -51,9 +53,9 @@ class Microscope:
         self.mmc = MMCorePy.CMMCore()
         self.config_abspath = os.path.abspath(config_path)
 
-        # if os.name == 'nt':  # check if windows
-        #     # ah! the microscope computer
-        #     os.chdir(windows7_path)
+        if os.name == 'nt':  # check if windows
+            # ah! the microscope computer
+            os.chdir(windows7_path)
 
         self.mmc.loadSystemConfiguration(self.config_abspath)
 
