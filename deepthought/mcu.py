@@ -21,6 +21,15 @@ import MMCorePy
 windows7_path = "C:\Program Files\Micro-Manager-2.0gamma"
 
 
+class PyMMEventCallBack(MMCorePy.MMEventCallback):
+    def onExposureChanged(self, *args):
+        print(args)
+        print("something changed")
+
+    def onPropertyChanged(self, *args):
+        print(args)
+        print("something changed")
+
 class TCPServerCore:
     @staticmethod
     def create_socket(host, port):
@@ -50,6 +59,8 @@ class TCPServerCore:
 
 class Microscope:
     def __init__(self, config_path):
+        self.mmcallback = PyMMEventCallBack()
+
         self.mmc = MMCorePy.CMMCore()
         self.config_abspath = os.path.abspath(config_path)
 

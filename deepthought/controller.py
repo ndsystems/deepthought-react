@@ -1,6 +1,7 @@
 import socket
 import pickle
 import time
+import MMCorePy
 
 
 class TCPCore:
@@ -115,7 +116,10 @@ class AcquisitionControl(BaseController):
 
 if __name__ == "__main__":
     scope = AcquisitionControl("localhost", 2500)
+    scope.send_command("mmc.registerCallback(self.mmcallback)")
     scope.setExposure(100)
+    scope.image()
+
     # scope.timelapse(cycles=10, timestep=1)
     img = scope.image()
-    
+
