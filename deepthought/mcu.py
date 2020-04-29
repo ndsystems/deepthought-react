@@ -16,19 +16,20 @@ import sys
 import logging
 import socket
 import pickle
-import MMCorePy
+import pymmcore
 
 windows7_path = "C:\Program Files\Micro-Manager-2.0gamma"
+linux_path = "/home/dna/lab/software/micromanager/lib/micro-manager"
 
 
-class PyMMEventCallBack(MMCorePy.MMEventCallback):
-    def onExposureChanged(self, *args):
-        print(args)
+class PyMMEventCallBack(pymmcore.MMEventCallback):
+    @classmethod
+    def onPropertiesChanged():
         print("something changed")
 
-    def onPropertyChanged(self, *args):
-        print(args)
-        print("something changed")
+    def onStagePositionChanged(self, *args):
+        print("stage position changed ", args)
+
 
 class TCPServerCore:
     @staticmethod
@@ -58,17 +59,24 @@ class TCPServerCore:
 
 
 class Microscope:
-    def __init__(self, config_path):
-        self.mmcallback = PyMMEventCallBack()
 
-        self.mmc = MMCorePy.CMMCore()
+    def __init__(self, config_path):
+        self.mmc = pymmcore.CMMCore()
         self.config_abspath = os.path.abspath(config_path)
 
         if os.name == 'nt':  # check if windows
             # ah! the microscope computer
-            os.chdir(windows7_path)
+            mm_dir = windows7_path
+        elif os.name == "posix":
+            mm_dir = linux_path
+
+        os.chdir(mm_dir)
+        self.mmc.setDeviceAdapterSearchPaths([mm_dir])
 
         self.mmc.loadSystemConfiguration(self.config_abspath)
+
+        self.mm_event_callback = PyMMEventCallBack()
+        self.mmc.registerCallback(self.mm_event_callback)
 
     def unload(self):
         # safely unload the microscope

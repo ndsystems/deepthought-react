@@ -6,11 +6,13 @@ import MMCorePy
 
 class TCPCore:
     def __init__(self, host, port):
-        self.mcu_socket = self.connect(host, port)
+        self.host = host
+        self.port = port
+        self.mcu_socket = self.connect()
 
-    def connect(self, host, port):
+    def connect(self):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect((host, port))
+        s.connect((self.host, self.port))
         return s
 
     def send(self, message):
@@ -22,6 +24,10 @@ class TCPCore:
 
         received = self.mcu_socket.recv(4096)
         return received
+
+    def reconnect(self):
+        self.mcu_socket.close()
+        self.mcu_socket = self.connect()
 
 
 class TCPControl(TCPCore):
@@ -122,4 +128,3 @@ if __name__ == "__main__":
 
     # scope.timelapse(cycles=10, timestep=1)
     img = scope.image()
-
