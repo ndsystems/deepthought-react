@@ -8,25 +8,19 @@
         }        
     </style>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <script type="text/javascript" charset="utf-8" async defer>
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/socket.io/1.3.6/socket.io.min.js"></script>
+    <script type="text/javascript" charset="utf-8">
+        function updateStates(data) {
+            console.log(data);
+        }
+
         function setStage(x_form, y_form, z_form)
         {
             var x = x_form.value; 
             var y = y_form.value; 
             var z = z_form.value;
 
-            if (x != "")
-            {
-            console.log(x);
-            }
-            if (y != "")
-            {
-            console.log(y);
-            }
-            if (z != "")
-            {
-            console.log(z);
-            }
+            socket.emit("stage", { "x" : x, "y" : y, "z" :z})
         }
 
         function selectShutter()
@@ -34,8 +28,22 @@
             var epi = document.getElementById("epi_shutter").checked;
             var dia = document.getElementById("dia_shutter").checked;
 
-            console.log(epi)
+            socket.emit("setShutter", { "epi" : epi, "dia" : dia})
+
         }
+
+        var socket = io.connect('http://' + document.domain + ':' + location.port);
+        socket.on('connect', function() {
+            console.log('websocket connected!');
+        });
+
+        socket.on('updateState', function(data) {
+            updateStates(data)
+        });
+
+
+
+
     </script>
 </head>
 
