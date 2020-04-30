@@ -1,23 +1,60 @@
 <!DOCTYPE html>
 <html lang="en-US">
-
 <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>deepthought</title>
-    {{mpl_figure | safe}}
+    <style type="text/css" media="screen">
+        body {
+            background-color: tan;
+        }        
+    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script type="text/javascript" charset="utf-8" async defer>
+        function setStage(x_form, y_form, z_form)
+        {
+            var x = x_form.value; 
+            var y = y_form.value; 
+            var z = z_form.value;
 
-    <form action="/action_page.php" method="get">
-        <button type="submit" formaction="/">Snap</button>
-    </form>
+            if (x != "")
+            {
+            console.log(x);
+            }
+            if (y != "")
+            {
+            console.log(y);
+            }
+            if (z != "")
+            {
+            console.log(z);
+            }
+        }
 
-    <form method="POST">
-        <input name="z_value">
-        <input type="submit" value="set Z">
-    </form>
+        function selectShutter()
+        {
+            var epi = document.getElementById("epi_shutter").checked;
+            var dia = document.getElementById("dia_shutter").checked;
+
+            console.log(epi)
+        }
+    </script>
 </head>
 
 <body>
+    <h4>deepthought</h4>
+    <hr />
+    {{mpl_figure | safe}}
+
+    <form>
+        X : <input name="x_form" width="8px" placeholder="x" />
+        Y : <input name="y_form" width="8px" placeholder="y" /><br />
+        Z : <input name="z_form" width="8px" placeholder="z" /><br />
+        <input value="set" type="button" width="8px" onclick="setStage(x_form, y_form, z_form)" />
+    </form> 
+
+    <form>
+        <input onclick="selectShutter()" id="epi_shutter" type="radio" name="shutter" value="epi" checked> EPI
+        <input onclick="selectShutter()" id="dia_shutter" type="radio" name="shutter" value="dia" > DIA
+    </form>
 
 </body>
-
 </html>
