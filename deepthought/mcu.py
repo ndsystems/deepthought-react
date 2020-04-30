@@ -17,27 +17,20 @@ import logging
 import socket
 import pickle
 import pymmcore
+from events import PyMMEventCallBack
+
 
 windows7_path = "C:\Program Files\Micro-Manager-2.0gamma"
 linux_path = "/home/dna/lab/software/micromanager/lib/micro-manager"
 
 
-class PyMMEventCallBack(pymmcore.MMEventCallback):
-    @classmethod
-    def onPropertiesChanged():
-        print("something changed")
-
-    def onStagePositionChanged(self, *args):
-        print("stage position changed ", args)
-
-
 class TCPServerCore:
     @staticmethod
-    def create_socket(host, port):
+    def create_server_socket(host, port):
         server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
         # gets rid of the address in use error
-        server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 5)
 
         # in case the port is not available, try to bind to the next one
         # do it untill an available port is found
@@ -56,68 +49,6 @@ class TCPServerCore:
 
         logging.info(f"LISTENING on {host}:{port}")
         return server_socket
-
-
-class Microscope:
-
-    def __init__(self, config_path):
-        self.mmc = pymmcore.CMMCore()
-        self.config_abspath = os.path.abspath(config_path)
-
-        if os.name == 'nt':  # check if windows
-            # ah! the microscope computer
-            mm_dir = windows7_path
-        elif os.name == "posix":
-            mm_dir = linux_path
-
-        os.chdir(mm_dir)
-        self.mmc.setDeviceAdapterSearchPaths([mm_dir])
-
-        self.mmc.loadSystemConfiguration(self.config_abspath)
-
-        self.mm_event_callback = PyMMEventCallBack()
-        self.mmc.registerCallback(self.mm_event_callback)
-
-    def unload(self):
-        # safely unload the microscope
-        self.mmc.reset()
-
-    def shutdown(self):
-        # a shutdown sequence
-        # unload microscope and exit
-        self.unload()
-        sys.exit()
-
-    def execute(self, command):
-        try:
-            value = eval(f"self.{command}")
-
-        except Exception as e:
-            error_msg = f"unknown mmc command: {command}"
-            logging.error(error_msg, exc_info=True)
-            return error_msg
-
-        return value
-
-
-class MicroscopeServer(Microscope):
-    def __init__(self, config_path, host="localhost", port=2500):
-        super().__init__(config_path)
-        self.host = host
-        self.port = port
-        self.client_socket = None
-        self.address = None
-
-    def startServer(self):
-        server = TCPServerCore()
-        server_socket = server.create_socket(self.host, self.port)
-
-        # this loop is for constantly looking for connections
-        while True:
-            # blocking call
-            self.client_socket, self.address = server_socket.accept()
-            logging.info(f"Accepted connection from: {self.address}")
-            server_data = self.callback()
 
     @staticmethod
     def serialize(data):
@@ -139,77 +70,166 @@ class MicroscopeServer(Microscope):
 
         return serialized_data + b"END"
 
-    def send(self, reply):
-        """send data to the client"""
-        serialized_mmc_reply = self.serialize(reply)
-        print(reply)
-        self.client_socket.sendall(serialized_mmc_reply)
 
-    def callback(self):
-        """function that is called after a connection is accepted"""
+class Microscope:
+    def __init__(self, config_path):
+        self.working_dir = os.getcwd()
 
-        # the main loop
-        # the different functions of the server is defined here
-        # this can be replaced with a chain of responsibility design pattern
+        self.mmc = pymmcore.CMMCore()
+        self.config_abspath = os.path.abspath(config_path)
 
+        if os.name == 'nt':  # check if windows
+            # ah! the microscope computer
+            mm_dir = windows7_path
+        elif os.name == "posix":
+            mm_dir = linux_path
+
+        os.chdir(mm_dir)
+        self.mmc.setDeviceAdapterSearchPaths([mm_dir])
+        self.mmc.loadSystemConfiguration(self.config_abspath)
+        os.chdir(self.working_dir)
+
+        self.mm_event_callback = PyMMEventCallBack()
+        self.mmc.registerCallback(self.mm_event_callback)
+
+    def unload(self):
+        # safely unload the microscope
+        self.mmc.reset()
+
+    def shutdown(self):
+        # a shutdown sequence
+        # unload microscope and exit
+        self.unload()
+        sys.exit()
+
+    def execute(self, command):
+        """execute a command, and return the value, or an error"""
+        try:
+            value = eval(f"self.{command}")
+
+        except Exception as e:
+            error_msg = f"MMCore Exception: {command}"
+            logging.error(error_msg, exc_info=True)
+            return error_msg
+
+        return value
+
+
+class MicroscopeServer(Microscope, TCPServerCore):
+    def __init__(self, config_path, host="localhost", port=2500):
+        super().__init__(config_path)
+        self.server_socket = self.create_server_socket(host, port)
+
+    def accept_client(self):
+        # this loop is for constantly looking for connections
         while True:
-            # this loop is for when we want to keep recv-ing from a connected
-            # client
+            # blocking call
+            self.client_socket, self.address = self.server_socket.accept()
+            logging.info(f"Accepted connection from: {self.address}")
 
-            try:
-                client_data = self.client_socket.recv(300)  # blocking call
+            while True:
+                # this loop is for when we want to keep recv-ing from
+                # a connected client
+                try:
+                    client_data = self.client_socket.recv(300)  # blocking call
+                    if not client_data:
+                        break
 
-                if not client_data:
+                except (ConnectionResetError):
+                    print("Dropped.")
                     break
 
-            except (ConnectionResetError):
-                print("Dropped.")
-                break
+                response = self.handler(client_data)
 
-            if "ping" in str(client_data):
-                # testing the connection
-                logging.info("ping")
-                self.send("pong\r")
+                if response == "break":
+                    break
 
-            elif "break" in str(client_data):
-                # breaks the recv block
-                logging.info("break")
-                self.send("breaking\r")
-                self.client_socket.shutdown(1)
-                break
+    def send(self, data):
+        """send data to the client"""
+        serialized_data = self.serialize(data)
+        self.client_socket.sendall(serialized_data)
 
-            elif "shutdown" in str(client_data):
-                logging.info("shutdown")
-                self.send("shutting down\r")
-                self.client_socket.shutdown(1)
-                self.shutdown()
+    def handler(self, client_data):
+        if "ping" in str(client_data):
+            # testing the connection
+            logging.info("ping")
+            self.send("pong\r")
 
-            elif "status" in str(client_data):
-                logging.info("status")
-                mmc_reply = self.execute("mmc.getSystemState()")
-                formatted = mmc_reply.getVerbose()
-                formatted = formatted.replace("<br>", "\n")
-                self.send(formatted)
+        elif "break" in str(client_data):
+            # breaks the recv block
+            logging.info("break")
+            self.send("breaking client connection\r")
+            self.client_socket.shutdown(1)
+            return "break"
 
-            elif "mmc." in str(client_data):
-                # for directly calling mmc methods
-                command = client_data.decode()
-                logging.info(command)
-                mmc_reply = self.execute(command)
-                self.send(mmc_reply)
-            else:
-                pass
+        elif "shutdown" in str(client_data):
+            logging.info("shutdown")
+            self.send("shutting down\r")
+
+            self.client_socket.shutdown(1)
+            self.shutdown()
+
+        elif "status" in str(client_data):
+            logging.info("status")
+            response = self.execute("mmc.getSystemState()")
+            # temporary workaround
+
+            # a function can take the response, repack it
+            # so that a picklable response can be sent
+            # thru socket.
+
+            formatted = response.getVerbose()
+            formatted = formatted.replace("<br>", "\n")
+
+            self.send(formatted)
+
+        elif "mmc." in str(client_data):
+            # for directly calling mmc methods
+            request = client_data.decode()
+            logging.info(request)
+            response = self.execute(request)
+            self.send(response)
+
+        else:
+            pass
+
+
+class MultiClientHandler(MicroscopeServer):
+    """In case multiple clients have to connect, each with different
+     nature of requests (and priority) to the microscope server object
+
+    *   microscope state monitor that checks on the microscope state in a
+        regular manner (low priority)
+
+    *   acqusitioncontrol that gives commands passed on by the user
+        (high priority)
+
+    *   auto-mechanisms that maintain microscope states - like autofocus,
+        auto-exposureTime, autoTrack, etc (medium priority)
+
+    psuedocode:
+        while server is on:
+            client_socket, request = accept_client()
+            queue.append([client_socket, request])
+
+        concurrently, in the queue
+
+        for client_socket, request in queue:
+            response = process_request(request)
+            send(client_socket, response)
+    """
+    def __init__():
+        self.queue = []
 
 
 if __name__ == "__main__":
-    user_dir = os.getcwd()
     logging.basicConfig(format='%(asctime)s - %(message)s',
                         level=logging.DEBUG)
 
     scope = MicroscopeServer("configs/demo.cfg")
 
     try:
-        scope.startServer()
+        scope.accept_client()
 
     except KeyboardInterrupt:
         scope.shutdown()
