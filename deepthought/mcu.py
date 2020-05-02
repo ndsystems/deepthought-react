@@ -1,11 +1,10 @@
 """
 Microscope Control Unit (mcu)
 
-Separates the functions that are essential to operate the microscope
-for specific higher order tasks, mostly wrapping around micromanager API.
-
-mmc - micro manager core
-https://valelab4.ucsf.edu/~MM/doc/MMCore/html/class_c_m_m_core.html
+Separates the functions that are essential to operate the microscope for
+lower order tasks. This microservice architecture makes it easier to
+develop the rest of the codebase, without crashing the microscope hardware
+because of exceptions runtime.
 
 problems: pickling swig objects
 https://stackoverflow.com/questions/9310053/how-to-make-my-swig-extension-module-work-with-pickle
@@ -25,8 +24,12 @@ linux_path = "/home/dna/lab/software/micromanager/lib/micro-manager"
 
 
 class TCPServerCore:
+    """Has the methods that are essential for the communication over TCP"""
     @staticmethod
     def create_server_socket(host, port):
+        """Method to create a server side socket"""
+
+        # create a IPv4 TCP socket
         server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
         # gets rid of the address in use error
@@ -36,6 +39,7 @@ class TCPServerCore:
         # do it untill an available port is found
         while True:
             try:
+                # bind to the host address and port
                 server_socket.bind((host, port))
 
             except Exception as e:
@@ -44,14 +48,18 @@ class TCPServerCore:
                 continue
             break
 
-        # upto 5 clients can connect (arbitrary for now)
+        # start listening on the bound host address and port
         server_socket.listen(5)
-
         logging.info(f"LISTENING on {host}:{port}")
+
         return server_socket
 
     @staticmethod
     def serialize(data):
+        """Appropriate serializing techniques for the data to be sent over
+        sockets"""
+
+        # if it is a string, encode it
         if type(data) is str:
             serialized_data = data.encode()
 
@@ -59,141 +67,155 @@ class TCPServerCore:
             data = "None"
             serialized_data = data.encode()
 
+        # in case of objects
         else:
+            # try to pickle them
             try:
                 serialized_data = pickle.dumps(data)
 
+            # when it fails, return error
+            # failure happens for SWIG objects
             except Exception as e:
-                # repack the SWIG object to make it picklable
                 error_msg = "pickling error"
                 logging.error(error_msg, exc_info=True)
                 serialized_data = error_msg.encode()
 
-        return serialized_data + b"END"
+        # concatinate trailing text so the client side knows where data ends
+        return serialized_data
+
+    def send(self, client_socket, data):
+        """send data to the client"""
+        serialized_data = self.serialize(data)
+        client_socket.sendall(serialized_data)
 
 
 class Microscope:
-    def __init__(self, config_path):
-        self.working_dir = os.getcwd()
+    """Contains objects necessary for the loading, unloading and communication
+    with the microscope (thru pymmcore)"""
 
-        self.mmc = pymmcore.CMMCore()
+    def __init__(self, config_path):
+        # use the absolute path of the config_path
         self.config_abspath = os.path.abspath(config_path)
+
+        # store the current working dir, so that we can change it back after
+        # device adapters are pointed to the micromanager directory
+        # changing the working directory to mm_dir is necessary for pymmcore
+        # to find the device adapters (stored in mm_dir) correctly
+        self.working_dir = os.getcwd()
 
         if os.name == 'nt':  # check if windows
             # ah! the microscope computer
             mm_dir = windows7_path
         elif os.name == "posix":
+            # the dev's linux computer
             mm_dir = linux_path
-
         os.chdir(mm_dir)
+
+        # instantiate the micromanager core object, and load the micromanager
+        # config file. API is available in
+        # https://valelab4.ucsf.edu/~MM/doc/MMCore/html/class_c_m_m_core.html
+
+        self.mmc = pymmcore.CMMCore()
         self.mmc.setDeviceAdapterSearchPaths([mm_dir])
         self.mmc.loadSystemConfiguration(self.config_abspath)
+
+        # change back to the working directory
         os.chdir(self.working_dir)
 
+        # register callback, to catch changes to properties, which can
+        # be sourced thru the DataEngine.
         self.mm_event_callback = PyMMEventCallBack()
         self.mmc.registerCallback(self.mm_event_callback)
 
     def unload(self):
-        # safely unload the microscope
+        """safely unload the microscope"""
         self.mmc.reset()
 
-    def shutdown(self):
-        # a shutdown sequence
-        # unload microscope and exit
-        self.unload()
-        sys.exit()
-
-    def execute(self, command):
-        """execute a command, and return the value, or an error"""
+    def execute(self, method):
+        """execute a method of MMCore, as instantiated in self.mmc and return
+        a result"""
         try:
-            value = eval(f"self.{command}")
-            logging.info(value)
+            # eval executes the method there can be potential security issues
+            # here that needs to be looked into
+            result = eval(f"self.{method}")
+            logging.info(f"{method} : {result}")
 
         except Exception as e:
-            error_msg = f"MMCore Exception: {command}"
+            # in case of exception, catch the error, and send a string object
+            # with the error message
+            error_msg = f"ERROR: {method} : {e}"
             logging.error(error_msg, exc_info=True)
             return error_msg
 
-        return value
+        return result
 
 
 class MicroscopeServer(Microscope, TCPServerCore):
+    """Extends the functionality of Microscope object by making it accessible
+    over a server socket"""
+
     def __init__(self, config_path, host="localhost", port=2500):
         super().__init__(config_path)
         self.server_socket = self.create_server_socket(host, port)
 
+    def shutdown(self):
+        """shutdown sequence for MCU"""
+
+        # close the socket, unload the microscope and exit the program
+        self.unload()
+        sys.exit()
+
     def accept_client(self):
-        # this loop is for constantly looking for connections
+        """accepts a client, and calls the client handler"""
+
+        # main loop for accepting connections
+        # this blocks, disabling multi-client connections
+
         while True:
             # blocking call
-            self.client_socket, self.address = self.server_socket.accept()
-            logging.info(f"Accepted connection from: {self.address}")
+            client_socket, address = self.server_socket.accept()
+            logging.info(f"Accepted connection from: {address}")
+            self.client_handler(client_socket)
 
-            while True:
-                # this loop is for when we want to keep recv-ing from
-                # a connected client
-                try:
-                    client_data = self.client_socket.recv(300)  # blocking call
-                    if not client_data:
-                        break
+    def client_handler(self, client_socket):
+        """receives requests from a client socket, and sends
+        response"""
 
-                except (ConnectionResetError):
-                    print("Dropped.")
+        # client loop for receiving and sending data
+        # this is blocking
+        while True:
+            try:
+                client_data = client_socket.recv(300)  # blocking call
+                if not client_data:
                     break
 
-                response = self.handler(client_data)
+            except (ConnectionResetError):
+                print("Dropped.")
+                break
 
-                if response == "break":
-                    break
+            # get response from message handler for received data
+            # and send it
+            response = self.message_handler(client_data)
+            self.send(client_socket, response)
 
-    def send(self, data):
-        """send data to the client"""
-        serialized_data = self.serialize(data)
-        self.client_socket.sendall(serialized_data)
+    def message_handler(self, client_data):
+        """Handles the client messages"""
+        request = client_data.decode()
+        logging.info(f"REQUEST: {request}")
 
-    def handler(self, client_data):
-        if "ping" in str(client_data):
-            # testing the connection
-            logging.info("ping")
-            self.send("pong\r")
+        if "ping" in str(request):
+            # ping the connection - for testing
+            return "pong\r"
 
-        elif "break" in str(client_data):
-            # breaks the recv block
-            logging.info("break")
-            self.send("breaking client connection\r")
-            self.client_socket.shutdown(1)
-            return "break"
-
-        elif "shutdown" in str(client_data):
-            logging.info("shutdown")
-            self.send("shutting down\r")
-
-            self.client_socket.shutdown(1)
+        elif "shutdown" in str(request):
+            # client wants to shutdown server
             self.shutdown()
 
-        elif "status" in str(client_data):
-            logging.info("status")
-            response = self.execute("mmc.getSystemState()")
-            # temporary workaround
-
-            # a function can take the response, repack it
-            # so that a picklable response can be sent
-            # thru socket.
-
-            formatted = response.getVerbose()
-            formatted = formatted.replace("<br>", "\n")
-
-            self.send(formatted)
-
-        elif "mmc." in str(client_data):
-            # for directly calling mmc methods
-            request = client_data.decode()
-            logging.info(request)
+        elif "mmc." in str(request):
+            # message is intended for pymmcore, execute it
+            # and return response
             response = self.execute(request)
-            self.send(response)
-
-        else:
-            pass
+            return response
 
 
 class MultiClientHandler(MicroscopeServer):
