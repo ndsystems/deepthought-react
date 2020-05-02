@@ -64,6 +64,7 @@ class TCPServerCore:
                 serialized_data = pickle.dumps(data)
 
             except Exception as e:
+                # repack the SWIG object to make it picklable
                 error_msg = "pickling error"
                 logging.error(error_msg, exc_info=True)
                 serialized_data = error_msg.encode()
@@ -106,6 +107,7 @@ class Microscope:
         """execute a command, and return the value, or an error"""
         try:
             value = eval(f"self.{command}")
+            logging.info(value)
 
         except Exception as e:
             error_msg = f"MMCore Exception: {command}"
