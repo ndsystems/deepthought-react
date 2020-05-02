@@ -71,6 +71,7 @@ class TCPClientCore:
 
 class BaseHandler(TCPClientCore):
     """provides MMCore like API to clients"""
+
     def setConfig(self, config_name, config_option):
         cmd = f"mmc.setConfig('setConfig', '{config_name}', '{config_option}')"
         return self.send_request(cmd)
@@ -127,9 +128,25 @@ class BaseHandler(TCPClientCore):
         cmd = self.setConfig("channel", ch)
         return self.send_request(cmd)
 
+    def get_all_properties(self):
+        list_of_devices = self.getLoadedDevices()
+        all_device_props = {}
+
+        for device in list_of_devices:
+            list_of_properties = self.getDevicePropertyNames(device)
+
+            device_props = {}
+            for property_ in list_of_properties:
+                value = self.getProperty(device, property_)
+                device_props[property_] = value
+
+            all_device_props[device] = device_props
+        return all_device_props
+
 
 class AcquisitionControl(BaseHandler):
     """example usage of BaseHandler"""
+
     def image(self):
         self.snapImage()
         img = self.getImage()
@@ -149,5 +166,3 @@ if __name__ == "__main__":
     scope = AcquisitionControl("localhost", 2500)
     scope.setExposure(100)
     scope.image()
-    # scope.timelapse(cycles=10, timestep=1)
-    img = scope.image()
