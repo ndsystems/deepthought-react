@@ -91,11 +91,7 @@
         socket.on("image", function(data) {
             draw_image(data)
         });
-
-        for (i=0; i<=10; i++) {
-            console.log(i)
-            socket.emit('image', {});
-        }
+        socket.emit('image', {});
     </script>
 
     <form>
