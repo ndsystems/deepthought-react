@@ -8,7 +8,7 @@ class TCPCore:
     def __init__(self, host, port):
         self.host = host
         self.port = port
-        self.mcu_socket = self.connect()
+        self.client_socket = self.connect()
 
     def connect(self):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -17,22 +17,22 @@ class TCPCore:
 
     def send(self, message):
         # higher level access to send message to mcu
-        self.mcu_socket.sendall(message)
+        self.client_socket.sendall(message)
 
     def recv(self):
         # higher level acesss to recv data from mcu
 
-        received = self.mcu_socket.recv(4096)
+        received = self.client_socket.recv(4096)
         return received
 
     def reconnect(self):
-        self.mcu_socket.close()
-        self.mcu_socket = self.connect()
+        self.client_socket.close()
+        self.client_socket = self.connect()
 
 
-class TCPControl(TCPCore):
+class TCPHandle(TCPCore):
     def send_command(self, message):
-        # what happens when a command is sent from the controller
+        # what happens when a command is sent from the handler
         serialized_message = self.serialize(message)
         self.send(serialized_message)
         response = b""
@@ -61,11 +61,24 @@ class TCPControl(TCPCore):
         return deserialized
 
 
-class BaseController(TCPControl):
-    @staticmethod
-    def setConfig(config_name, config_option):
+class BaseHandler(TCPHandle):
+    def setConfig(self, config_name, config_option):
         cmd = f"mmc.setConfig('setConfig', '{config_name}', '{config_option}')"
-        return cmd
+        return self.send_command(cmd)
+
+    def getProperty(self, device_label, property_name):
+        """In the config file, the syntax is:
+        """
+        cmd = f"mmc.getProperty('{device_label}', '{property_name}')"
+        return self.send_command(cmd)
+
+    def getDevicePropertyNames(self, device_label):
+        cmd = f"mmc.getDevicePropertyNames('{device_label}')"
+        return self.send_command(cmd)
+
+    def getLoadedDevices(self):
+        cmd = "mmc.getLoadedDevices()"
+        return self.send_command(cmd)
 
     def snapImage(self):
         cmd = "mmc.snapImage()"
@@ -91,6 +104,10 @@ class BaseController(TCPControl):
         cmd = f"mmc.setXYPosition({x}, {y})"
         return self.send_command(cmd)
 
+    def getExposure(self):
+        cmd = f"mmc.getExposure()"
+        return self.send_command(cmd)
+
     def setExposure(self, exposure_time):
         cmd = f"mmc.setExposure({exposure_time})"
         return self.send_command(cmd)
@@ -104,14 +121,14 @@ class BaseController(TCPControl):
         return self.send_command(cmd)
 
 
-class AcquisitionControl(BaseController):
+class AcquisitionControl(BaseHandler):
     def image(self):
         self.snapImage()
         img = self.getImage()
         return img
 
     def timelapse(self, cycles, timestep):
-        # a simple timelapse function
+        # a simple timelapse function which is very much blocking
         images = []
         for i in range(cycles):
             snap = self.image()
@@ -122,9 +139,7 @@ class AcquisitionControl(BaseController):
 
 if __name__ == "__main__":
     scope = AcquisitionControl("localhost", 2500)
-    scope.send_command("mmc.registerCallback(self.mmcallback)")
     scope.setExposure(100)
     scope.image()
-
     # scope.timelapse(cycles=10, timestep=1)
     img = scope.image()
