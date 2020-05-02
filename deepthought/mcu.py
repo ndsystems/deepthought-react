@@ -80,12 +80,13 @@ class TCPServerCore:
                 logging.error(error_msg, exc_info=True)
                 serialized_data = error_msg.encode()
 
-        # concatinate trailing text so the client side knows where data ends
         return serialized_data
 
     def send(self, client_socket, data):
         """send data to the client"""
-        serialized_data = self.serialize(data)
+
+        # concatinate trailing text so the client side knows where data ends
+        serialized_data = self.serialize(data) + b"END"
         client_socket.sendall(serialized_data)
 
 
