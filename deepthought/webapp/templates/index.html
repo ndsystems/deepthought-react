@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+    <title>deepthought</title>
+    <link rel="stylesheet" type="text/css" href= "{{ url_for('static',filename='styles/default.css') }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/socket.io/1.3.6/socket.io.min.js"></script>
+    <script type="text/javascript" charset="utf-8">
+        function updateStates(data) {
+            console.log(data);
+        }
+
+        function setStage(x_form, y_form, z_form)
+        {
+            var x = x_form.value; 
+            var y = y_form.value; 
+            var z = z_form.value;
+
+            socket.emit("stage", { "x" : x, "y" : y, "z" :z})
+        }
+
+        function selectShutter()
+        {
+            var epi = document.getElementById("epi_shutter").checked;
+            var dia = document.getElementById("dia_shutter").checked;
+
+            socket.emit("setShutter", { "epi" : epi, "dia" : dia})
+
+        }
+
+
+        function mpld3_load_lib(url, callback){
+            var s = document.createElement('script');
+            s.src = url;
+            s.async = true;
+            s.onreadystatechange = s.onload = callback;
+            s.onerror = function(){console.warn("failed to load library " + url);};
+            document.getElementsByTagName("head")[0].appendChild(s);
+        }
+
+        function draw_image(json_data) {
+
+            if(typeof(mpld3) !== "undefined" && mpld3._mpld3IsLoaded){
+               // already loaded: just create the figure
+               !function(mpld3){
+                   d3.select("#my_data").selectAll("*").remove();
+                   mpld3.draw_figure("my_data", json_data);
+               }(mpld3);
+            }else if(typeof define === "function" && define.amd){
+               // require.js is available: use it to load d3/mpld3
+               require.config({paths: {d3: "https://mpld3.github.io/js/d3.v3.min"}});
+               require(["d3"], function(d3){
+                  window.d3 = d3;
+                  mpld3_load_lib("https://mpld3.github.io/js/mpld3.v0.3.js", function(){
+                     d3.select("#my_data").selectAll("*").remove();
+                     mpld3.draw_figure("my_data", json_data);
+                  });
+                });
+            }else{
+                // require.js not available: dynamically load d3 & mpld3
+                mpld3_load_lib("https://mpld3.github.io/js/d3.v3.min.js", function(){
+                     mpld3_load_lib("https://mpld3.github.io/js/mpld3.v0.3.js", function(){
+                             d3.select("#my_data").selectAll("*").remove();
+                             mpld3.draw_figure("my_data", json_data);
+                        })
+                     });
+            }
+        }
+    </script>
+
+
+</head>
+
+<body>
+    <h4>deepthought</h4>
+    <hr />
+
+    <script>
+        var socket = io.connect('http://' + document.domain + ':' + location.port);
+        socket.on('connect', function() {
+            console.log('websocket connected!');
+        });
+
+        socket.on('updateState', function(data) {
+            updateStates(data)
+        });
+    </script>
+
+    <div id="my_data"></div>
+    <script>
+        socket.on("image", function(data) {
+            draw_image(data)
+        });
+        socket.emit('image', {});
+    </script>
+
+    <form>
+        X : <input name="x_form" width="8px" placeholder="x" />
+        Y : <input name="y_form" width="8px" placeholder="y" /><br />
+        Z : <input name="z_form" width="8px" placeholder="z" /><br />
+        <input value="set" type="button" width="8px" onclick="setStage(x_form, y_form, z_form)" />
+    </form> 
+
+    <form>
+        <input onclick="selectShutter()" id="epi_shutter" type="radio" name="shutter" value="epi" checked> EPI
+        <input onclick="selectShutter()" id="dia_shutter" type="radio" name="shutter" value="dia" > DIA
+    </form>
+
+</body>
+</html>
