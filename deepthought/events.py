@@ -1,4 +1,7 @@
+"""To keep track of changes to the microscope"""
+
 import pymmcore
+
 
 class PyMMEventCallBack(pymmcore.MMEventCallback):
     @classmethod
