@@ -10,6 +10,7 @@ problems: pickling swig objects
 https://stackoverflow.com/questions/9310053/how-to-make-my-swig-extension-module-work-with-pickle
 
 """
+from configs import default
 import os
 import sys
 import logging
@@ -251,7 +252,8 @@ if __name__ == "__main__":
     logging.basicConfig(format='%(asctime)s - %(message)s',
                         level=logging.DEBUG)
 
-    scope = MicroscopeServer("configs/demo.cfg")
+    config_file = default["mmconfig"]["path"]
+    scope = MicroscopeServer(config_file)
 
     try:
         scope.accept_client()

@@ -1,4 +1,5 @@
 """A microservice to intermediate connections to MCU"""
+from configs import default
 import socket
 import pickle
 import time
@@ -163,6 +164,20 @@ class AcquisitionControl(BaseHandler):
 
 
 if __name__ == "__main__":
-    scope = AcquisitionControl("localhost", 2500)
-    scope.setExposure(100)
-    scope.image()
+    # run debug mcu with:
+    # This will open a socket server and listen on the mcu: host and mcuport
+    #
+    #   $ python run_mcu.py
+    #
+    # run debug client with python -i handler.py
+    #
+    # which run the file, then open up the python
+    # interpreter, where you can write code on top of handler.py.
+    #
+    # In this case, this main function creates an instance of AcquisitionControl class that will
+    # establish a connection to mcu at the host and port of the MCU server as defined in the config.
+
+    hostname = default["mcu_server"]["hostname"]
+    port = int(default["mcu_server"]["port"])
+
+    scope = AcquisitionControl(hostname, port)
