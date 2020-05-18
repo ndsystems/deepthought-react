@@ -10,7 +10,7 @@ problems: pickling swig objects
 https://stackoverflow.com/questions/9310053/how-to-make-my-swig-extension-module-work-with-pickle
 
 """
-from configs import default
+from configs import get_default
 import os
 import sys
 import logging
@@ -20,8 +20,10 @@ import pymmcore
 from events import PyMMEventCallBack
 
 
-windows7_path = "C:\Program Files\Micro-Manager-2.0gamma"
-linux_path = "/home/dna/lab/software/micromanager/lib/micro-manager"
+default = get_default()
+
+windows7_path = default["mm"]["win_path"]
+linux_path = default["mm"]["linux_path"]
 
 
 class TCPServerCore:
@@ -156,7 +158,7 @@ class MicroscopeServer(Microscope, TCPServerCore):
     """Extends the functionality of Microscope object by making it accessible
     over a server socket"""
 
-    def __init__(self, config_path, host="localhost", port=2500):
+    def __init__(self, config_path, host, port):
         super().__init__(config_path)
         self.server_socket = self.create_server_socket(host, port)
 
@@ -252,8 +254,12 @@ if __name__ == "__main__":
     logging.basicConfig(format='%(asctime)s - %(message)s',
                         level=logging.DEBUG)
 
-    config_file = default["mmconfig"]["path"]
-    scope = MicroscopeServer(config_file)
+    config_file = default["mm"]["cfg_file"]
+
+    hostname = default["mcu_server"]["hostname"]
+    port = int(default["mcu_server"]["port"])
+
+    scope = MicroscopeServer(config_file, hostname, port)
 
     try:
         scope.accept_client()

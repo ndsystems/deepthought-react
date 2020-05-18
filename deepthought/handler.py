@@ -1,8 +1,10 @@
 """A microservice to intermediate connections to MCU"""
-from configs import default
+from configs import get_default
 import socket
 import pickle
 import time
+
+default = get_default()
 
 
 class TCPClientCore:

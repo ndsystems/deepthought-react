@@ -1,11 +1,12 @@
 import configparser
 
-default = configparser.ConfigParser()
-default.read('default.ini')
-extension = default["extend"]["files"].split(",")[:-1]
 
-for ini in extension:
-    ini = ini.strip()
-    default.read(ini)
+def get_default():
+    default = configparser.ConfigParser()
+    default.read('default.ini')
+    return default
 
-# print(default.sections())  # for a list of config parameters
+
+if __name__ == "__main__":
+    default = get_default()
+    print(default.sections())

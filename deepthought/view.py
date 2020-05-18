@@ -1,4 +1,4 @@
-from configs import default
+from configs import get_default
 from flask import Flask, render_template
 from flask_socketio import SocketIO, emit, send
 from handler import AcquisitionControl
@@ -7,6 +7,7 @@ from pprint import pprint
 import json
 
 # connect to the mcu server
+default = get_default()
 hostname = default["mcu_server"]["hostname"]
 port = int(default["mcu_server"]["port"])
 
