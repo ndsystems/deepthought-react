@@ -10,6 +10,7 @@ function mpld3_load_lib(url, callback) {
 }
 
 function draw_image(json_data) {
+  console.log("drawing");
   if (typeof mpld3 !== "undefined" && mpld3._mpld3IsLoaded) {
     // already loaded: just create the figure
     !(function (mpld3) {
@@ -36,13 +37,3 @@ function draw_image(json_data) {
     });
   }
 }
-
-var socket = io.connect("http://" + document.domain + ":" + location.port);
-
-socket.on("get_props", function (data) {
-  console.log(data);
-});
-
-socket.on("image", function (data) {
-  draw_image(data);
-});

@@ -131,6 +131,22 @@ class BaseHandler(TCPClientCore):
         cmd = self.setConfig("channel", ch)
         return self.send_request(cmd)
 
+    def startContinuousSequenceAcquisition(self, value):
+        cmd = f"mmc.startContinuousSequenceAcquisition({value})"
+        return self.send_request(cmd)
+
+    def getRemainingImageCount(self):
+        cmd = f"mmc.getRemainingImageCount()"
+        return self.send_request(cmd)
+
+    def getLastImage(self):
+        cmd = f"mmc.getLastImage()"
+        return self.send_request(cmd)
+
+    def stopSequenceAcquisition(self):
+        cmd = f"mmc.stopSequenceAcquisition()"
+        return self.send_request(cmd)
+
     def get_all_properties(self):
         list_of_devices = self.getLoadedDevices()
         all_device_props = {}

@@ -5,6 +5,8 @@ from handler import AcquisitionControl
 from viz import imshow_js
 from pprint import pprint
 import json
+import time
+
 
 # connect to the mcu server
 default = get_default()
@@ -47,9 +49,23 @@ def snap_image():
 
 @socketio.on("live")
 def start_live_acquisition():
-    print("recv: live")
-    # start live acquisition
-    # wait for stop
+    scope.startContinuousSequenceAcquisition(1)
+    while True:
+        img = scope.getLastImage()
+        if scope.getRemainingImageCount() > 0:
+            img = scope.getLastImage()
+            emit("image", imshow_js(img))
+            print("live emitting")
+
+        else:
+            print('No frame')
+
+        time.sleep(0.1)
+
+
+@socketio.on("stop_snap")
+def stop_snap():
+    stop[0] = false
 
 
 def dict_to_string(some_dict):
@@ -64,7 +80,6 @@ def get_props():
 
 
 if __name__ == "__main__":
-    # start a flask server with websockets
     hostname = default["flask_server"]["hostname"]
     port = int(default["flask_server"]["port"])
 
